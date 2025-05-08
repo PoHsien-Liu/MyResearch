@@ -18,7 +18,7 @@ List the top 3 NASDAQ stocks most similar to {ticker} stock.
 """
 
 PREDICT_INSTRUCTION_SYSTEM_PROMPT="""
-Instruction: Forecast next week stock return (price change) for symbol, given the company profile, historical weekly news summary,
+Instruction: Forecast next day stock return (price change) for symbol, given the company profile, historical weekly news summary,
 keywords, and stock returns, and optionally the examples from other stocks of a similar company.
 """
 
@@ -28,10 +28,10 @@ Company Profile: {company_description}
 Recent News Summary:
 {summary}
 
-Now predict what could be the next week’s Summary, Keywords, and forecast the Stock Return.
+Now predict what could be the next day’s Summary, Keywords, and forecast the Stock Return.
 The predicted Summary/Keywords should explain the stock return forecasting. 
-You should predict what could happen next week. Do not just summarize the history. 
-The next week stock return need not be the same as the previous week. Use format Summary: ..., Keywords: ..., Stock Return: ...
+You should predict what could happen next day. Do not just summarize the history. 
+The next day stock return need not be the same as the previous week. Use format Summary: ..., Keywords: ..., Stock Return: [number]% ([up/down])
 
 Can you reason step by step before the finalized output?
 """

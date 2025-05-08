@@ -8,15 +8,18 @@ import random
 
 from tdmllm.tdmllm import TDMLLM
 
-def setup_logger():
-    log_filename = f"exp_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+def setup_logger(to_terminal=False):
+    log_filename = f"./log/exp_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+
+    handlers = [logging.FileHandler(log_filename, encoding="utf-8")]
+
+    if to_terminal:
+        handlers.append(logging.StreamHandler(sys.stdout))
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
-        handlers=[
-            logging.FileHandler(log_filename),
-            logging.StreamHandler(sys.stdout)
-        ]
+        handlers=handlers
     )
     logger = logging.getLogger(__name__)
     return logger
@@ -32,8 +35,9 @@ def main():
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--out', type=str, default='')
     # Load data paths
-    parser.add_argument("--price_dir", type=str, default="../SOTA_SEP/sep/data/sample_price/preprocessed/")
-    parser.add_argument("--tweet_dir", type=str, default="../SOTA_SEP/sep/data/sample_tweet/raw/")
+    parser.add_argument("--price_dir", type=str, default="/home/pohsien0915/Research/datasets/SEP/sn2/price/preprocessed/")
+    parser.add_argument("--tweet_dir", type=str, default="/home/pohsien0915/Research/datasets/SEP/sn2/tweet/raw/")
+    parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--seq_len", type=int, default=5)
     args = parser.parse_args()
 
@@ -48,7 +52,7 @@ def main():
     set_random_seed(args.seed)
 
     tdm_llm = TDMLLM(args, logger)
-    tdm_llm.inference()
+    tdm_llm.eval()
     
 if __name__ == '__main__':
     main()
