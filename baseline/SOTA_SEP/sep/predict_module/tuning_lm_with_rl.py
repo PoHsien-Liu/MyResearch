@@ -4,7 +4,7 @@ from typing import Optional
 import torch
 from accelerate import Accelerator
 from datasets import load_dataset
-from peft import LoraConfig, prepare_model_for_int8_training
+from peft import LoraConfig, prepare_model_for_kbit_training
 from tqdm import tqdm
 from transformers import Adafactor, AutoTokenizer, HfArgumentParser, pipeline, BitsAndBytesConfig
 from transformers import LlamaTokenizer, LlamaConfig, LlamaForSequenceClassification, LlamaForCausalLM
@@ -31,12 +31,35 @@ def tuning_lm_with_rl(args):
     dataset_name = script_args.datasets_dir
     print("dataset_name: ", dataset_name)
 
+    # Original PPOConfig with model_name
+    # config = PPOConfig(
+    #     model_name=script_args.rl_base_model,
+    #     learning_rate=script_args.rl_learning_rate,
+    #     log_with=script_args.log_with,
+    #     batch_size=script_args.batch_size,
+    #     mini_batch_size=script_args.mini_batch_size,
+    #     gradient_accumulation_steps=script_args.rl_gradient_accumulation_steps,
+    #     optimize_cuda_cache=True,
+    #     early_stopping=script_args.early_stopping,
+    #     target_kl=script_args.target_kl,
+    #     ppo_epochs=script_args.ppo_epochs,
+    #     seed=script_args.seed,
+    # )
+
+    # Updated PPOConfig without model_name (for newer TRL versions)
+    # Changes made:
+    # 1. Removed model_name parameter as it's no longer supported in newer TRL versions
+    # 2. Removed log_with parameter as it's no longer supported
+    # 3. Updated parameter names to match new TRL version:
+    #    - rl_learning_rate -> learning_rate
+    #    - batch_size -> mini_batch_size
+    #    - rl_gradient_accumulation_steps -> gradient_accumulation_steps
+    # 4. Added new parameters:
+    #    - init_kl_coef: Initial KL coefficient
+    #    - adap_kl_ctrl: Whether to use adaptive KL control
     config = PPOConfig(
-        model_name=script_args.rl_base_model,
         learning_rate=script_args.rl_learning_rate,
-        log_with=script_args.log_with,
-        batch_size=script_args.batch_size,
-        mini_batch_size=script_args.mini_batch_size,
+        batch_size=script_args.mini_batch_size,
         gradient_accumulation_steps=script_args.rl_gradient_accumulation_steps,
         optimize_cuda_cache=True,
         early_stopping=script_args.early_stopping,
@@ -140,6 +163,9 @@ def tuning_lm_with_rl(args):
     # set seed before initializing value head for deterministic eval
     set_seed(config.seed)
 
+    # Set checkpoint use_reentrant parameter
+    torch.utils.checkpoint.checkpoint_sequential = lambda *args, **kwargs: torch.utils.checkpoint.checkpoint_sequential(*args, use_reentrant=False, **kwargs)
+
     # Now let's build the model, the reference model, and the tokenizer.
     current_device = Accelerator().local_process_index
 
@@ -151,17 +177,40 @@ def tuning_lm_with_rl(args):
         task_type="CAUSAL_LM",
     )
 
+    # Original model initialization with load_in_4bit
+    # model = AutoModelForCausalLMWithValueHead.from_pretrained(
+    #     script_args.rl_base_model,
+    #     load_in_4bit=True,
+    #     # device_map={"": current_device},
+    #     device_map="auto",
+    #     peft_config=lora_config,
+    #     # layer_norm_names=[],
+    #     # torch_dtype=torch.float16,
+    #     quantization_config=BitsAndBytesConfig(llm_int8_enable_fp32_cpu_offload=True)
+    # )
+
+    # Updated model initialization using BitsAndBytesConfig for 4-bit quantization
+    # Changes made:
+    # 1. Removed deprecated load_in_4bit parameter
+    # 2. Added comprehensive BitsAndBytesConfig with:
+    #    - load_in_4bit=True: Enable 4-bit quantization
+    #    - llm_int8_enable_fp32_cpu_offload=True: Enable CPU offloading for better memory management
+    #    - bnb_4bit_compute_dtype=torch.float16: Use float16 for computations
+    #    - bnb_4bit_use_double_quant=True: Enable double quantization for better memory efficiency
+    #    - bnb_4bit_quant_type="nf4": Use NF4 quantization type for better performance
     model = AutoModelForCausalLMWithValueHead.from_pretrained(
-        config.model_name,
-        load_in_4bit=True,
-        # device_map={"": current_device},
+        script_args.rl_base_model,
         device_map="auto",
         peft_config=lora_config,
-        # layer_norm_names=[],
-        # torch_dtype=torch.float16,
-        quantization_config=BitsAndBytesConfig(llm_int8_enable_fp32_cpu_offload=True)
+        quantization_config=BitsAndBytesConfig(
+            load_in_4bit=True,
+            llm_int8_enable_fp32_cpu_offload=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4"
+        )
     )
-    print("finetune model: ", config.model_name, type(model))
+    print("finetune model: ", script_args.rl_base_model, type(model))
     print("finetune model's is_loaded_in_4bit: ", model.is_loaded_in_4bit)
 
     optimizer = None
@@ -204,7 +253,7 @@ def tuning_lm_with_rl(args):
     # print("reward_model: ", type(reward_model))
     # print("reward_model is_loaded_in_4bit: ", reward_model.is_loaded_in_4bit)
 
-    # reward_model = prepare_model_for_int8_training(reward_model)
+    # reward_model = prepare_model_for_kbit_training(reward_model)
     # reward_model_config = LlamaConfig.from_pretrained(reward_model_name)
 
     sentiment_pipe = pipeline(
@@ -227,6 +276,7 @@ def tuning_lm_with_rl(args):
         "top_k": 0.0,
         "top_p": 1.0,
         "do_sample": True,
+        "temperature": 0.9,
         "pad_token_id": tokenizer.pad_token_id,
         "eos_token_id": 100_000,
     }

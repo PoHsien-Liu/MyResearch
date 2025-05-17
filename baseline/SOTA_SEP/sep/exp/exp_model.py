@@ -5,9 +5,10 @@ from predict_module.merge_peft_adapter import merge_peft_adapter
 from predict_module.supervised_finetune import supervised_finetune
 from predict_module.train_reward_model import train_reward_model
 from predict_module.tuning_lm_with_rl import tuning_lm_with_rl
-from transformers import LlamaTokenizer, pipeline #, AutoModelForCausalLM, BitsAndBytesConfig
+from transformers import LlamaTokenizer, pipeline, BitsAndBytesConfig #, AutoModelForCausalLM
 from trl import AutoModelForCausalLMWithValueHead
 import os, json
+import torch
 
 
 class Exp_Model:
@@ -86,17 +87,39 @@ class Exp_Model:
         test_agents = [agent_cls(row['ticker'], row['summary'], row['target']) for _, row in data.iterrows()]
         print("Loaded Test Agents.")
 
+        # Updated model initialization using BitsAndBytesConfig
         model = AutoModelForCausalLMWithValueHead.from_pretrained(
             "./saved_models/sep_model",
-            load_in_4bit=True,
-            device_map="auto"
+            device_map="auto",
+            generation_config={
+                "do_sample": True,  # Enable sampling
+                "temperature": 0.9,
+                "top_p": 0.6
+            },
+            quantization_config=BitsAndBytesConfig(
+                load_in_4bit=True,
+                llm_int8_enable_fp32_cpu_offload=True,
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4"
+            )
         )
         tokenizer = LlamaTokenizer.from_pretrained(self.args.output_dir+"step_saved")
+
+        # Updated reward model initialization using BitsAndBytesConfig
         reward_model = pipeline(
             "sentiment-analysis",
             model=self.args.reward_model_name,
             device_map="auto",
-            model_kwargs={"load_in_4bit": True},
+            model_kwargs={
+                "quantization_config": BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    llm_int8_enable_fp32_cpu_offload=True,
+                    bnb_4bit_compute_dtype=torch.float16,
+                    bnb_4bit_use_double_quant=True,
+                    bnb_4bit_quant_type="nf4"
+                )
+            },
             tokenizer=tokenizer
         )
 

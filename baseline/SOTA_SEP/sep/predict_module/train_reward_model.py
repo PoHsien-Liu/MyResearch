@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from datasets import load_dataset
-from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_int8_training
+from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
 from transformers import (
     AutoConfig,
     AutoModelForSequenceClassification,
@@ -16,6 +16,8 @@ from transformers import (
     PreTrainedTokenizerBase,
     Trainer,
     TrainingArguments,
+    DataCollatorWithPadding,
+    BitsAndBytesConfig
 )
 from transformers.utils import PaddingStrategy
 from transformers import LlamaForCausalLM, LlamaTokenizer, LlamaForSequenceClassification, LlamaConfig
@@ -106,21 +108,34 @@ def train_reward_model(args):
         model = LlamaForSequenceClassification.from_pretrained(
             script_args.reward_base_model,
             num_labels=1,
-            load_in_4bit=True,
+            # load_in_4bit=True,
             torch_dtype=torch.float16,
             device_map=device_map,
+            quantization_config=BitsAndBytesConfig(
+                load_in_4bit=True,
+                llm_int8_enable_fp32_cpu_offload=True,
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4"
+            )
         )
     else:
         model = AutoModelForSequenceClassification.from_pretrained(
             script_args.reward_base_model,
             num_labels=1,
-            load_in_4bit=True,
             torch_dtype=torch.float16,
             device_map=device_map,
             trust_remote_code=True,
+            quantization_config=BitsAndBytesConfig(
+                load_in_4bit=True,
+                llm_int8_enable_fp32_cpu_offload=True,
+                bnb_4bit_compute_dtype=torch.float16,
+                bnb_4bit_use_double_quant=True,
+                bnb_4bit_quant_type="nf4"
+            )
         )
 
-    model = prepare_model_for_int8_training(model)
+    model = prepare_model_for_kbit_training(model)
 
     peft_config = LoraConfig(
         task_type=TaskType.SEQ_CLS,
@@ -139,6 +154,8 @@ def train_reward_model(args):
     tokenizer.pad_token = tokenizer.eos_token
     model.config.pad_token_id = tokenizer.eos_token_id
     model.config.use_cache = not script_args.gradient_checkpointing
+    if script_args.gradient_checkpointing:
+        torch.utils.checkpoint.checkpoint_sequential = lambda *args, **kwargs: torch.utils.checkpoint.checkpoint_sequential(*args, use_reentrant=False, **kwargs)
     num_proc = 1  # Can adjust to be higher if you have more processors.
 
 
@@ -207,13 +224,34 @@ def train_reward_model(args):
 
 
     class RewardTrainer(Trainer):
-        # Define how to compute the reward loss. We use the InstructGPT pairwise logloss: https://arxiv.org/abs/2203.02155
-        def compute_loss(self, model, inputs, return_outputs=False):
-            rewards_j = model(
-                input_ids=inputs["input_ids_j"], attention_mask=inputs["attention_mask_j"])[0]
-            rewards_k = model(
-                input_ids=inputs["input_ids_k"], attention_mask=inputs["attention_mask_k"])[0]
-            loss = -nn.functional.logsigmoid(rewards_j - rewards_k).mean()
+        # Original implementation by author
+        # def compute_loss(self, model, inputs, return_outputs=False):
+        #     rewards_j = model(
+        #         input_ids=inputs["input_ids_j"], attention_mask=inputs["attention_mask_j"])[0]
+        #     rewards_k = model(
+        #         input_ids=inputs["input_ids_k"], attention_mask=inputs["attention_mask_k"])[0]
+        #     loss = -nn.functional.logsigmoid(rewards_j - rewards_k).mean()
+        #     if return_outputs:
+        #         return loss, {"rewards_j": rewards_j, "rewards_k": rewards_k}
+        #     return loss
+
+        # Modified implementation to handle additional kwargs
+        def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+            input_ids_j = inputs["input_ids_j"]
+            attention_mask_j = inputs["attention_mask_j"]
+            input_ids_k = inputs["input_ids_k"]
+            attention_mask_k = inputs["attention_mask_k"]
+
+            # Compute rewards for both completions
+            outputs_j = model(input_ids=input_ids_j, attention_mask=attention_mask_j)
+            outputs_k = model(input_ids=input_ids_k, attention_mask=attention_mask_k)
+
+            rewards_j = outputs_j.logits.squeeze(-1)
+            rewards_k = outputs_k.logits.squeeze(-1)
+
+            # Compute loss
+            loss = -torch.nn.functional.logsigmoid(rewards_j - rewards_k).mean()
+
             if return_outputs:
                 return loss, {"rewards_j": rewards_j, "rewards_k": rewards_k}
             return loss

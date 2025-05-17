@@ -6,35 +6,44 @@ from tenacity import (
 )
 # from fastchat.model import get_conversation_template
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, logging
+from transformers import LlamaForCausalLM, AutoTokenizer, pipeline
 
 class LLaMALLM:
     def __init__(self):
-        logging.set_verbosity_error()
-
-        self.model_name = "meta-llama/Llama-3.1-8B-Instruct"
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name, torch_dtype=torch.float16, device_map="auto")
-
-    def __call__(self, prompt):
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.device)
-        # print(f"Input length: {len(inputs['input_ids'][0])}")
-
-        with torch.no_grad():
-            outputs = self.model.generate(**inputs,
-                                            max_new_tokens=256,
-                                            repetition_penalty=1.2,
-                                            do_sample=True,
-                                            top_p=0.9,
-                                            temperature=0.3,
-                                            eos_token_id=self.tokenizer.eos_token_id
-                                        )
-        response = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        # Load Tokenizer and Model
+        self.base_model = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+        self.tokenizer = AutoTokenizer.from_pretrained(self.base_model)
+        # Set PAD Token
+        PAD_TOKEN = "<|pad|>"
+        self.tokenizer.add_special_tokens({"pad_token": PAD_TOKEN})
+        self.tokenizer.padding_side = "right"
         
-        stop_sequence = "Summary:"
-        if stop_sequence in response:
-            response = response.split(stop_sequence, 1)[-1].strip()
+        self.model = LlamaForCausalLM.from_pretrained(
+            self.base_model, 
+            torch_dtype=torch.float16,
+            device_map="auto"
+        )
+
+        self.text_gen_pipeline = pipeline(
+            task="text-generation",
+            batch_size=8,
+            model=self.model,
+            tokenizer=self.tokenizer,
+            max_new_tokens=512,
+            return_full_text=False
+        )
+
+    def create_chat_format_data(self, system_prompt, user_prompt):
+        return [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
+
+    def __call__(self, user_prompt):
+        chat_format_data = self.create_chat_format_data("", user_prompt)
+
+        prompt = self.tokenizer.apply_chat_template(
+            chat_format_data, tokenize=False, add_generation_prompt=True
+        )
+
+        response = self.text_gen_pipeline(prompt)[0]['generated_text']
 
         return response
 

@@ -12,8 +12,8 @@ np.random.seed(fix_seed)
 parser = argparse.ArgumentParser(description='generating')
 
 # load data
-parser.add_argument("--price_dir", type=str, default="data/price/preprocessed/")
-parser.add_argument("--tweet_dir", type=str, default="data/tweet/raw/")
+parser.add_argument("--price_dir", type=str, default="data/sample_price/preprocessed/")
+parser.add_argument("--tweet_dir", type=str, default="data/sample_tweet/raw/")
 parser.add_argument("--seq_len", type=int, default=5)
 
 # supervised finetuning

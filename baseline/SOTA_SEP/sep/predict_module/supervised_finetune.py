@@ -1,11 +1,18 @@
 from peft import (
-    prepare_model_for_int8_training,
+    prepare_model_for_kbit_training,
     LoraConfig,
     get_peft_model,
     get_peft_model_state_dict,
     set_peft_model_state_dict,
 )
-from transformers import LlamaForCausalLM, LlamaTokenizer
+from transformers import (
+    LlamaForCausalLM,
+    LlamaTokenizer,
+    TrainingArguments,
+    Trainer,
+    DataCollatorForLanguageModeling,
+    BitsAndBytesConfig
+)
 import os
 import sys
 
@@ -47,14 +54,20 @@ def supervised_finetune(args):
     print(args.model_path)
     model = LlamaForCausalLM.from_pretrained(
         args.model_path,
-        load_in_4bit=True,
         device_map=device_map,
+        quantization_config=BitsAndBytesConfig(
+            load_in_4bit=True,
+            llm_int8_enable_fp32_cpu_offload=True,
+            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_quant_type="nf4"
+        )
     )
     tokenizer = LlamaTokenizer.from_pretrained(
         args.model_path, add_eos_token=True
     )
 
-    model = prepare_model_for_int8_training(model)
+    model = prepare_model_for_kbit_training(model)
 
     config = LoraConfig(
         r=LORA_R,
@@ -100,9 +113,9 @@ def supervised_finetune(args):
             print(f"Checkpoint {checkpoint_name} not found")
 
         train_args_path = os.path.join(
-            resume_from_checkpoint, "trainer_state.json")
+            args.resume_from_supervised_checkpoint, "trainer_state.json")
 
-        if os.path.exists(train_args_path):
+        if os.path.exists(train_args_path): 
             import json
             base_train_args = json.load(open(train_args_path, 'r'))
             base_max_steps = base_train_args["max_steps"]
@@ -125,11 +138,11 @@ def supervised_finetune(args):
         data, CUTOFF_LEN, val_set_size, tokenizer)
     train_data, val_data = dataloader.load_data()
 
-    trainer = transformers.Trainer(
+    trainer = Trainer(
         model=model,
         train_dataset=train_data,
         eval_dataset=val_data,
-        args=transformers.TrainingArguments(
+        args=TrainingArguments(
             per_device_train_batch_size=MICRO_BATCH_SIZE,
             gradient_accumulation_steps=GRADIENT_ACCUMULATION_STEPS,
             warmup_steps=100,
@@ -149,7 +162,7 @@ def supervised_finetune(args):
             report_to="wandb" if args.wandb else [],
             ignore_data_skip=args.ignore_data_skip,
         ),
-        data_collator=transformers.DataCollatorForLanguageModeling(
+        data_collator=DataCollatorForLanguageModeling(
             tokenizer, mlm=False)
     )
     model.config.use_cache = False

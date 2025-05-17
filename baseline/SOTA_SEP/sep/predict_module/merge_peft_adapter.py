@@ -15,14 +15,28 @@ def merge_peft_adapter(
     peft_config = PeftConfig.from_pretrained(peft_model_id)
     print("peft_config: ", peft_config)
 
+    # Updated quantization config
+    quantization_config = BitsAndBytesConfig(
+        load_in_8bit=True,
+        llm_int8_threshold=6.0,
+        llm_int8_has_fp16_weight=False,
+        bnb_8bit_compute_dtype=torch.float16,
+        bnb_8bit_use_double_quant=True
+    )
+
+    # 設置 checkpoint 的 use_reentrant 參數
+    torch.utils.checkpoint.checkpoint_sequential = lambda *args, **kwargs: torch.utils.checkpoint.checkpoint_sequential(*args, use_reentrant=False, **kwargs)
+
     model = AutoModelForCausalLM.from_pretrained(
         peft_config.base_model_name_or_path,
         return_dict=True,
         torch_dtype=torch.float16,
         low_cpu_mem_usage=True,
-        quantization_config=BitsAndBytesConfig(llm_int8_enable_fp32_cpu_offload=True)
+        # quantization_config=BitsAndBytesConfig(llm_int8_enable_fp32_cpu_offload=True)
         # ValueError: Loading THUDM/chatglm-6b requires you to execute the configuration file in that repo on your local machine. Make sure you have read the code there to avoid malicious use, then set the option `trust_remote_code=True` to remove this error.
         # trust_remote_code=True,
+        quantization_config=quantization_config,
+        trust_remote_code=True,
     )
 
     # tokenizer = AutoTokenizer.from_pretrained(peft_config.base_model_name_or_path)
@@ -53,9 +67,13 @@ def merge_peft_adapter(
     # model = model.base_model.model
     model = model.merge_and_unload()
 
+    # Set generation config before saving
+    model.generation_config.do_sample = True
+    model.generation_config.temperature = 0.9
+    model.generation_config.top_p = 0.6
+
     if output_name is None:
         output_name = f"{model_name}-adapter-merged"
-        model.save_pretrained(output_name)
-    else:
-        model.save_pretrained(f"{output_name}")
+    
+    model.save_pretrained(output_name)
     # model.push_to_hub(f"{model_name}-adapter-merged", use_temp_dir=False)
