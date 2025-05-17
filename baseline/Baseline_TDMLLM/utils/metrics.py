@@ -69,13 +69,14 @@ def calculate_metrics(preds, labels):
         'invalid': len(labels) - len(labels_mapped)
     }
 
-def save_metrics(metrics_result, model_name, save_dir="results"):
+def save_metrics(metrics_result, model_name, save_dir="results", dataset_name=None):
     """
     Save evaluation results into a JSON file.
     Args:
         metrics_result: dict, output of calculate_metrics()
         model_name: str, model name
         save_dir: str, directory to save
+        dataset_name: str, name of the dataset
     """
     os.makedirs(save_dir, exist_ok=True)
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -83,6 +84,7 @@ def save_metrics(metrics_result, model_name, save_dir="results"):
 
     result_to_save = {
         "model_name": model_name,
+        "dataset_name": dataset_name,
         "timestamp": timestamp,
         "total_samples": metrics_result['total'],
         "valid_samples": metrics_result['valid'],

@@ -8,6 +8,22 @@ import random
 
 from tdmllm.tdmllm import TDMLLM
 
+# Dataset path mapping
+DATASET_PATHS = {
+    "ACL18": {
+        "price": "ACL18/stocknet-dataset/price",
+        "tweet": "ACL18/stocknet-dataset/tweet"
+    },
+    "CMIN": {
+        "price": "CMIN/CMIN-Dataset/CMIN-US/price",
+        "tweet": "CMIN/CMIN-Dataset/CMIN-US/news"
+    },
+    "SEP": {
+        "price": "SEP/sn2/price",
+        "tweet": "SEP/sn2/tweet"
+    }
+}
+
 def setup_logger(to_terminal=False):
     log_filename = f"./log/exp_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
@@ -35,11 +51,16 @@ def main():
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--out', type=str, default='')
     # Load data paths
-    parser.add_argument("--price_dir", type=str, default="/home/pohsien0915/Research/datasets/SEP/sn2/price/preprocessed/")
-    parser.add_argument("--tweet_dir", type=str, default="/home/pohsien0915/Research/datasets/SEP/sn2/tweet/raw/")
+    parser.add_argument("--dataset_name", type=str, default="ACL18", choices=["ACL18", "CMIN", "SEP"], help="Name of the dataset for saving results (ACL18, CMIN, or SEP)")
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--seq_len", type=int, default=5)
     args = parser.parse_args()
+
+    # Set data paths based on dataset name
+    base_path = "/home/pohsien0915/Research/datasets"
+    dataset_paths = DATASET_PATHS[args.dataset_name]
+    args.price_dir = f"{base_path}/{dataset_paths['price']}/preprocessed/"
+    args.tweet_dir = f"{base_path}/{dataset_paths['tweet']}/raw/"
 
     # Setup logger
     logger = setup_logger()

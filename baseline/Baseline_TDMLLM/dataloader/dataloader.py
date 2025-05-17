@@ -15,6 +15,14 @@ class DataLoader:
         self.seq_len = args.seq_len
         self.summarizer = Summarizer(args, logger)
         self.summary_cache = {}  # 新增快取字典
+        self.dataset_name = args.dataset_name
+        # 只在 ACL18 數據集時設置時間範圍
+        if self.dataset_name == "ACL18":
+            self.start_date = datetime(2014, 1, 1)
+            self.end_date = datetime(2016, 1, 1)
+        else:
+            self.start_date = None
+            self.end_date = None
 
     def get_cached_summary(self, ticker, date_str):
         """從快取中獲取摘要"""
@@ -74,13 +82,25 @@ class DataLoader:
                 ordered_price_data = np.flip(np.genfromtxt(price_path, dtype=str, skip_header=False), 0)
                 ticker = file[:-4]
 
-                tes_idx = round(len(ordered_price_data) * 0.8)
-                end_idx = len(ordered_price_data)
+                # 獲取有效的數據索引
+                if self.dataset_name == "ACL18":
+                    valid_indices = []
+                    for idx in range(len(ordered_price_data)):
+                        date_str = ordered_price_data[idx, 0]
+                        current_date = datetime.strptime(date_str, "%Y-%m-%d")
+                        if self.start_date <= current_date <= self.end_date:
+                            valid_indices.append(idx)
 
-                if flag == "train":
-                    data_range = range(tes_idx)
+                    if not valid_indices:
+                        self.logger.warning(f"No data found in specified date range for {ticker}")
+                        continue
+                    data_to_process = valid_indices
                 else:
-                    data_range = range(tes_idx, end_idx)
+                    data_to_process = range(len(ordered_price_data))
+
+                tes_idx = round(len(data_to_process) * 0.8)
+                end_idx = len(data_to_process)
+                data_range = data_to_process[:tes_idx] if flag == "train" else data_to_process[tes_idx:end_idx]
 
                 with tqdm(total=len(data_range), desc=f"{ticker} Processing", position=1, leave=True) as inner_bar:
                     for idx in data_range:

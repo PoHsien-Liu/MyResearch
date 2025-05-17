@@ -1,0 +1,29 @@
+{
+    "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+    "dataset_name": "ACL18",
+    "timestamp": "20250517_100411",
+    "total_samples": 6024,
+    "valid_samples": 6024,
+    "invalid_samples": 0,
+    "accuracy": 0.49734395750332006,
+    "mcc": -0.004793309724642848,
+    "precision": 0.4974585635359116,
+    "recall": 0.7490848585690516,
+    "f1_score": 0.597875166002656,
+    "confusion_matrix": {
+        "labels": [
+            "Negative",
+            "Positive"
+        ],
+        "matrix": [
+            [
+                745,
+                2274
+            ],
+            [
+                754,
+                2251
+            ]
+        ]
+    }
+}

@@ -1,0 +1,28 @@
+{
+    "model_name": "meta-llama/Meta-Llama-3.1-8B-Instruct",
+    "timestamp": "20250516_080224",
+    "total_samples": 7796,
+    "valid_samples": 7796,
+    "invalid_samples": 0,
+    "accuracy": 0.4901231400718317,
+    "mcc": -0.02867136223084611,
+    "precision": 0.49489164086687304,
+    "recall": 0.8178562292146329,
+    "f1_score": 0.6166457710483171,
+    "confusion_matrix": {
+        "labels": [
+            "Negative",
+            "Positive"
+        ],
+        "matrix": [
+            [
+                624,
+                3263
+            ],
+            [
+                712,
+                3197
+            ]
+        ]
+    }
+}

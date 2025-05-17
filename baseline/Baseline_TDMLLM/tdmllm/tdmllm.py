@@ -1,4 +1,5 @@
 import re
+import os
 from tqdm import tqdm
 from models.llm import LLaMALLM
 from dataloader.dataloader import DataLoader
@@ -37,71 +38,51 @@ class TDMLLM:
         correct = 0
         incorrect = 0
 
-        company_prompts = []
-        ticker_list = []
-        summary_list = []
-        
-        # Step 1: 先組 company prompts
-        for index, row in data.iterrows():
-            ticker = row['ticker']
-            summary = row['summary']
-            
-            prompt = self._build_relative_company_prompt(ticker)
-            if prompt.strip() == "":
-                self.logger.error(f"🔥 Empty prompt generated for ticker: {ticker}")
-
-            company_prompts.append(prompt)
-            ticker_list.append(ticker)
-            summary_list.append(summary)
-            labels.append(row['target'])
-        
-        # Step 2: 分 batch 處理 company description
-        company_descriptions = []
-        for i in tqdm(range(0, len(company_prompts), self.args.batch_size), desc="🏢 Generating Company Descriptions"):
-            batch_prompts = company_prompts[i: i+self.args.batch_size]
-            batch_outputs = self.llm.batch_infer("", batch_prompts)
-            company_descriptions.extend(batch_outputs)
-        
-        # Step 3: 用 company description + summary 組 predict prompts
-        predict_prompts = []
-        for company_desc, summary in zip(company_descriptions, summary_list):
-            predict_prompts.append(
-                self._build_predict_instruction(company_desc, summary)
-            )
-
-        # Step 4: 分 batch 推理 predict
-        predict_results = []
-        for i in tqdm(range(0, len(predict_prompts), self.args.batch_size), desc="📈 Predicting Stock Movements"):
-            batch_prompts = predict_prompts[i: i+self.args.batch_size]
-            batch_outputs = self.llm.batch_infer(self.predict_instuction['system_prompt'], batch_prompts)
-            predict_results.extend(batch_outputs)
-
-        # Step 5: 從 predict output 中提取 stock movement
-        for index, predict_result in enumerate(predict_results):
+        for index, row in tqdm(data.iterrows(), total=len(data), desc="📊 Processing Samples"):
             try:
-                self.logger.info(f"\n📌 [{index}] Ticker: {ticker_list[index]}")
-                self.logger.info(f"📝 Summary: {summary_list[index]}")
-                self.logger.info(f"🎯 Target: {labels[index]}")
-
+                ticker = row['ticker']
+                summary = row['summary']
+                label = row['target']
+                
+                # Step 1: 生成公司描述
+                company_prompt = self._build_relative_company_prompt(ticker)
+                if company_prompt.strip() == "":
+                    self.logger.error(f"🔥 Empty prompt generated for ticker: {ticker}")
+                    continue
+                
+                company_description = self.llm("", company_prompt)
+                
+                # Step 2: 生成預測
+                predict_prompt = self._build_predict_instruction(company_description, summary)
+                predict_result = self.llm(self.predict_instuction['system_prompt'], predict_prompt)
+                
+                # Step 3: 提取股票走勢
+                self.logger.info(f"\n📌 [{index}] Ticker: {ticker}")
+                self.logger.info(f"📝 Summary: {summary}")
+                self.logger.info(f"🎯 Target: {label}")
                 self.logger.info(f"🧠 Prediction: {predict_result}")
 
                 stock_movement = self._extract_stock_return(predict_result)
                 preds.append(stock_movement)
+                labels.append(label)
 
-                self.logger.info(f"Stock movement: {stock_movement}, Ground Truth: {labels[index]}")
+                self.logger.info(f"Stock movement: {stock_movement}, Ground Truth: {label}")
 
-                if stock_movement == labels[index]:
+                if stock_movement == label:
                     correct += 1
                 else:
                     incorrect += 1
+                    
             except Exception as e:
-                self.logger.exception(f"🔥 Error during prediction for ticker {ticker_list[index]}")
+                self.logger.exception(f"🔥 Error during prediction for ticker {ticker}")
                 preds.append("Unknown")
+                labels.append(label)
                 incorrect += 1
-        self.logger.info(f"Correct: {correct}, Incorrect: {incorrect}")
+
+            self.logger.info(f"Correct: {correct}, Incorrect: {incorrect}")
 
         metrics_result = calculate_metrics(preds, labels)
-        save_metrics(metrics_result, self.args.base_model, "results")
+        save_metrics(metrics_result, self.args.base_model, os.path.join("results", self.args.dataset_name), self.args.dataset_name)
 
     def _extract_stock_return(self, text):
         text = text.lower().strip()
