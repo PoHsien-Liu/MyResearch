@@ -78,12 +78,19 @@ def save_metrics(metrics_result, model_name, save_dir="results", dataset_name=No
         save_dir: str, directory to save
         dataset_name: str, name of the dataset
     """
-    os.makedirs(save_dir, exist_ok=True)
+    # 創建分層目錄結構：dataset_name/method_name/model_name/timestamp/
+    method_name = "TDMLLM"
+    safe_model_name = model_name.replace('/', '_').replace('\\', '_').replace(':', '_')
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    save_path = os.path.join(save_dir, f"{model_name}_eval_{timestamp}.json")
+    
+    results_dir = os.path.join(save_dir, dataset_name, method_name, safe_model_name, timestamp)
+    os.makedirs(results_dir, exist_ok=True)
+    
+    save_path = os.path.join(results_dir, "eval.json")
 
     result_to_save = {
         "model_name": model_name,
+        "method_name": method_name,
         "dataset_name": dataset_name,
         "timestamp": timestamp,
         "total_samples": metrics_result['total'],
@@ -100,7 +107,6 @@ def save_metrics(metrics_result, model_name, save_dir="results", dataset_name=No
         }
     }
 
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
     with open(save_path, 'w') as f:
         json.dump(result_to_save, f, indent=4)
 

@@ -131,6 +131,7 @@ class DataLoader:
                         if summary_all != "":
                             data = pd.concat([data, pd.DataFrame([{
                                 'ticker': ticker,
+                                'end_date': end_date_str,  
                                 'summary': summary_all.rstrip(),
                                 'target': target
                             }])], ignore_index=True)

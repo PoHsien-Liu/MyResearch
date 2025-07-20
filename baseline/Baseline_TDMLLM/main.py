@@ -10,6 +10,10 @@ from tdmllm.tdmllm import TDMLLM
 
 # Dataset path mapping
 DATASET_PATHS = {
+    "SAMPLE":{
+        "price": "sample_data/sample_price",
+        "tweet": "sample_data/sample_tweet"
+    },
     "ACL18": {
         "price": "ACL18/stocknet-dataset/price",
         "tweet": "ACL18/stocknet-dataset/tweet"
@@ -19,8 +23,8 @@ DATASET_PATHS = {
         "tweet": "CMIN/CMIN-Dataset/CMIN-US/news"
     },
     "SEP": {
-        "price": "SEP/sn2/price",
-        "tweet": "SEP/sn2/tweet"
+        "price": "SEP/price",
+        "tweet": "SEP/tweet"
     }
 }
 
@@ -51,13 +55,13 @@ def main():
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--out', type=str, default='')
     # Load data paths
-    parser.add_argument("--dataset_name", type=str, default="ACL18", choices=["ACL18", "CMIN", "SEP"], help="Name of the dataset for saving results (ACL18, CMIN, or SEP)")
+    parser.add_argument("--dataset_name", type=str, default="SEP", choices=["SAMPLE", "ACL18", "CMIN", "SEP"], help="Name of the dataset for saving results (ACL18, CMIN, or SEP)")
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--seq_len", type=int, default=5)
     args = parser.parse_args()
 
     # Set data paths based on dataset name
-    base_path = "/home/pohsien0915/Research/datasets"
+    base_path = "/home/pohsien/Research/datasets"
     dataset_paths = DATASET_PATHS[args.dataset_name]
     args.price_dir = f"{base_path}/{dataset_paths['price']}/preprocessed/"
     args.tweet_dir = f"{base_path}/{dataset_paths['tweet']}/raw/"
