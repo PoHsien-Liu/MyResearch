@@ -1,0 +1,15 @@
+{
+    "ticker": "BABA",
+    "date": "2020-07-30",
+    "tweet_data": [
+        "$GOOGL- HUGE WINNER of the day!\n\n$SPX $SPY $AMZN $AAPL $AMD $FB $SHOP $BYND $NVDA $GOOGL $MSFT $TSLA $BA $NFLX $JPM $BAC $YM $YM_F $NQ $NQ_F $ES $ES_F $QQQ $WMT $BABA $BIDU $ROKU $RTY_F $RTY $iwm $VIX $GC $GOOG https://t.co/bsxTzw3JPr https://t.co/N4fjM7IKRS",
+        "RT @saxena_puru: Ecommerce - Wow!\n\nLong $ADYEY $BABA $ETSY $MELI $SE $SHOP $VRM https://t.co/hbAM23VanA",
+        "Few calls from our Discord alerts\nhttps://t.co/dGb5BVIOYK\n$EDSA $KODK $DOW $GNUS $IDEX $boxl $BABA $TSLA $TAOP $JFK $CEMI $SPY $TSLA $SHOP $AMZN $NVDA $ROKU $EBAY $AMD $BB $DAL $DOW $Kodk $AAPL $ESE $SPCE $FCEL $TRIP $BYND $MRNA $NOK $OXY $CCL $CRM $DGLY $HTZ $Znga $GMBL $FB",
+        "$SGRY $PRVB $TXN $SHOP $EXAS  $CCI  $ANET $WIX $CME  $A $AAPL $AMD $BABA $GOOG $AMZN $AKER $T $AUPH $AYTU $ATVI $GOOGL $AAOI $ABIO $ACB.CA $AA $AAL $AAXN $AAAP $AAVL\nTo enhance your experience in trading and get instant help click here https://t.co/yvgdWwQmGC",
+        "RT @Christi57973254: Few calls from our Discord alerts\nhttps://t.co/dGb5BVIOYK\n$EDSA $KODK $DOW $GNUS $IDEX $boxl $BABA $TSLA $TAOP $JFK $C\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: $GOOGL- HUGE WINNER of the day!\n\n$SPX $SPY $AMZN $AAPL $AMD $FB $SHOP $BYND $NVDA $GOOGL $MSFT $TSLA $BA $NFLX $JPM $BAC $YM $YM_F $NQ $NQ_F $ES $ES_F $QQQ $WMT $BABA $BIDU $ROKU $RTY_F $RTY $iwm $VIX $GC $GOOG https://t.co/bsxTzw3JPr https://t.co/N4fjM7IKRS\nRT @saxena_puru: Ecommerce - Wow!\n\nLong $ADYEY $BABA $ETSY $MELI $SE $SHOP $VRM https://t.co/hbAM23VanA\nFew calls from our Discord alerts\nhttps://t.co/dGb5BVIOYK\n$EDSA $KODK $DOW $GNUS $IDEX $boxl $BABA $TSLA $TAOP $JFK $CEMI $SPY $TSLA $SHOP $AMZN $NVDA $ROKU $EBAY $AMD $BB $DAL $DOW $Kodk $AAPL $ESE $SPCE $FCEL $TRIP $BYND $MRNA $NOK $OXY $CCL $CRM $DGLY $HTZ $Znga $GMBL $FB\n$SGRY $PRVB $TXN $SHOP $EXAS  $CCI  $ANET $WIX $CME  $A $AAPL $AMD $BABA $GOOG $AMZN $AKER $T $AUPH $AYTU $ATVI $GOOGL $AAOI $ABIO $ACB.CA $AA $AAL $AAXN $AAAP $AAVL\nTo enhance your experience in trading and get instant help click here https://t.co/yvgdWwQmGC\nRT @Christi57973254: Few calls from our Discord alerts\nhttps://t.co/dGb5BVIOYK\n$EDSA $KODK $DOW $GNUS $IDEX $boxl $BABA $TSLA $TAOP $JFK $C\u2026\n",
+    "summary": "It looks like you want to summarize the text is not understand what you are trying to extract the news from the news article about stocks.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

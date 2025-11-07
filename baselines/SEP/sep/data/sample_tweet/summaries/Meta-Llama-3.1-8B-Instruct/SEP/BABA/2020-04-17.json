@@ -1,0 +1,12 @@
+{
+    "ticker": "BABA",
+    "date": "2020-04-17",
+    "tweet_data": [
+        "RT @alert_options: BOOM \ud83d\udcb0\ud83d\udcb0 Come Join US \n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For  Daily Powerful\u2026",
+        "$BABA NEW ARTICLE : 4 Ways the Coronavirus Could Create Opportunities for Alibaba Stock https://t.co/wsiIXiZUjs Get all the latest $BABA related news here : https://t.co/639mxCMCGb https://t.co/McWlFTQ0oP"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: RT @alert_options: BOOM \ud83d\udcb0\ud83d\udcb0 Come Join US \n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For  Daily Powerful\u2026\n$BABA NEW ARTICLE : 4 Ways the Coronavirus Could Create Opportunities for Alibaba Stock https://t.co/wsiIXiZUjs Get all the latest $BABA related news here : https://t.co/639mxCMCGb https://t.co/McWlFTQ0oP\n",
+    "summary": "It looks like you want to help you to summarize the text. It seems that you'd like a summary of the article about the news. Here is not clear. I'll provide a summary of the news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

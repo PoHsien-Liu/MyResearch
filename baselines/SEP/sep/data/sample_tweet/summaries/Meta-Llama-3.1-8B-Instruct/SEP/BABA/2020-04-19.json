@@ -1,0 +1,15 @@
+{
+    "ticker": "BABA",
+    "date": "2020-04-19",
+    "tweet_data": [
+        "$BA - Trade Idea - April 24 165C - bid/ask: 4.65/4.85\n\nClosed at 154 on Friday.\n\nNeeds to hold over 151 to continue this current bounce.\n\nBA over 155 can run to 161, 167, 173, 180 next.\n\n----\n$AMZN $AMD $BABA $USO $FB $AAPL $GOOGL $NFLX $ROKU $TSLA $SPX $SPY $TDOC $COST $ZM $GILD https://t.co/gLJ6Rmj8nv",
+        "RT @TMLTrader: $BABA reclaims its 10-week line and the 200-level. It's still working on the right side of its base. See if it can break abo\u2026",
+        "RT @IBD_ECarson: The biggest risk in this #coronavirus market rally; five stocks closing in on breakouts  https://t.co/YV3CPb6qXg $AAPL $AM\u2026",
+        "RT @TrendSpider: Podcast with @SJosephBurns tonight at 6 PM EST.\n\nGoing over:\n\n$SPY $QQQ $IWM $VIX\n$ROKU $BABA $AMD $DAL \n\nWould love to se\u2026",
+        "RT @TMLTrader: Setups and Watch List, 4/19: $BABA $NOW $DOCU $TEAM $MSFT $SHOP $ZS $AMD\n\nFollowing charts courtesy of @MarketSmith \n\n$SPY $\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: $BA - Trade Idea - April 24 165C - bid/ask: 4.65/4.85\n\nClosed at 154 on Friday.\n\nNeeds to hold over 151 to continue this current bounce.\n\nBA over 155 can run to 161, 167, 173, 180 next.\n\n----\n$AMZN $AMD $BABA $USO $FB $AAPL $GOOGL $NFLX $ROKU $TSLA $SPX $SPY $TDOC $COST $ZM $GILD https://t.co/gLJ6Rmj8nv\nRT @TMLTrader: $BABA reclaims its 10-week line and the 200-level. It's still working on the right side of its base. See if it can break abo\u2026\nRT @IBD_ECarson: The biggest risk in this #coronavirus market rally; five stocks closing in on breakouts  https://t.co/YV3CPb6qXg $AAPL $AM\u2026\nRT @TrendSpider: Podcast with @SJosephBurns tonight at 6 PM EST.\n\nGoing over:\n\n$SPY $QQQ $IWM $VIX\n$ROKU $BABA $AMD $DAL \n\nWould love to se\u2026\nRT @TMLTrader: Setups and Watch List, 4/19: $BABA $NOW $DOCU $TEAM $MSFT $SHOP $ZS $AMD\n\nFollowing charts courtesy of @MarketSmith \n\n$SPY $\u2026\n",
+    "summary": "It appears that you want to be a summary of the text was not clear.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

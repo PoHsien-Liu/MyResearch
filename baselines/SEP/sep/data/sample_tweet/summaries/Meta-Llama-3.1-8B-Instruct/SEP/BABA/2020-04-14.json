@@ -1,0 +1,16 @@
+{
+    "ticker": "BABA",
+    "date": "2020-04-14",
+    "tweet_data": [
+        "BOOM \ud83d\udcb0\ud83d\udcb0 Come Join US \n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For  Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts  Paypal monthly link in bio, $149.99 DM for biweekly link $84.99 #trading #optionstrader #Money https://t.co/Uep4tBpJNv",
+        "$BABA NEW ARTICLE : Business in the Age of COVID-19: Alibaba isn\u2019t out of the woods after China\u2019s recovery from the coronavirus https://t.co/ThixooVkuh Get all the latest $BABA related news here : https://t.co/639mxCMCGb https://t.co/vuudj5cxpz",
+        "RT @High5Sh0rty: Learn the stocks that move in correlation to one another:\n\n$NFLX \u2014\u2014-&gt; $ROKU\n$BABA \u2014\u2014-&gt; $JD\n$AMZN \u2014\u2014\u2014&gt; $GOOGL\n$LMT \u2014\u2014\u2014\u2014&gt; $N\u2026",
+        "RT @saxena_puru: Updated portfolio -\n\n$ADYYF $AYX $BABA $CRWD $DDOG $DOCU $ESTC $FB $LVGO $MELI $PINS $ROKU $SE $SHOP $SQ $STNE $TCEHY $TTD\u2026",
+        "RT @UPBOptionMil: Some of todays largest option trades  4.14.20  $JNJ $PLNT $AIG $AA $EXPE $MSFT $PCG $BABA https://t.co/bdTb102mLh",
+        "RT @alert_options: BOOOM this is how we do it. Our members are killing it...Join us for Transparency, Daily Powerful Watchlist, Swing &amp; Day\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: BOOM \ud83d\udcb0\ud83d\udcb0 Come Join US \n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For  Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts  Paypal monthly link in bio, $149.99 DM for biweekly link $84.99 #trading #optionstrader #Money https://t.co/Uep4tBpJNv\n$BABA NEW ARTICLE : Business in the Age of COVID-19: Alibaba isn\u2019t out of the woods after China\u2019s recovery from the coronavirus https://t.co/ThixooVkuh Get all the latest $BABA related news here : https://t.co/639mxCMCGb https://t.co/vuudj5cxpz\nRT @High5Sh0rty: Learn the stocks that move in correlation to one another:\n\n$NFLX \u2014\u2014-&gt; $ROKU\n$BABA \u2014\u2014-&gt; $JD\n$AMZN \u2014\u2014\u2014&gt; $GOOGL\n$LMT \u2014\u2014\u2014\u2014&gt; $N\u2026\nRT @saxena_puru: Updated portfolio -\n\n$ADYYF $AYX $BABA $CRWD $DDOG $DOCU $ESTC $FB $LVGO $MELI $PINS $ROKU $SE $SHOP $SQ $STNE $TCEHY $TTD\u2026\nRT @UPBOptionMil: Some of todays largest option trades  4.14.20  $JNJ $PLNT $AIG $AA $EXPE $MSFT $PCG $BABA https://t.co/bdTb102mLh\nRT @alert_options: BOOOM this is how we do it. Our members are killing it...Join us for Transparency, Daily Powerful Watchlist, Swing &amp; Day\u2026\n",
+    "summary": "It seems like you want to help you to summarize the text. I'm not understand the content of the article about the news. Here's summary of the news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

@@ -1,0 +1,14 @@
+{
+    "ticker": "BABA",
+    "date": "2020-04-02",
+    "tweet_data": [
+        "As I've said many times, no one has any idea what is going on with Chinese businesses. There is NO transparency. No one has any clue.  Here is a coffee chain that was flubbing the numbers. What are the big guys like $TCEHY $BABA $JD $YY doing? $LK",
+        "$CDEV premarket gift Hedgefunds LOADING\ud83d\udcb8\ud83d\udcc8 $AAPL $AMD $AMRN $AAL $BAC $AMZN $MSFT $BA $ABT $TSLA $X $NVDA $GE $DIS $CCL $UBER $DAL $NFLX $FB $T $F $MU $SQ $M $ZM $XOM $GILD $ROKU $UAL $JPM $ABBV $FCX $SNAP $BABA $WFC $RCL $BB $HSBC $LYG $TEVA $C $OXY $JNJ $LYFT $LK $SBUX $BA $M https://t.co/UFtiGgmsSP",
+        "@APompliano @ErnestMEdsel1 $SPY $MSFT $AMZN $FB $SBUX $JPM $CMG $JNJ $BABA $NKE $CCL $UNH $NVDA $DIS $VZ $TSLA $QQQ $MSI $WMT $NOW $NFLX $DECK $MELI $BKNG $PLNT $BA $CCL $WYNN $RCL $AAL",
+        "RT @UPBOptionMil: Some of todays top stock option open interest changes 4.2.20 $AAL $GM $X $FCX $BABA $GOLD $CCL $TEVA $MAS https://t.co/4K\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: As I've said many times, no one has any idea what is going on with Chinese businesses. There is NO transparency. No one has any clue.  Here is a coffee chain that was flubbing the numbers. What are the big guys like $TCEHY $BABA $JD $YY doing? $LK\n$CDEV premarket gift Hedgefunds LOADING\ud83d\udcb8\ud83d\udcc8 $AAPL $AMD $AMRN $AAL $BAC $AMZN $MSFT $BA $ABT $TSLA $X $NVDA $GE $DIS $CCL $UBER $DAL $NFLX $FB $T $F $MU $SQ $M $ZM $XOM $GILD $ROKU $UAL $JPM $ABBV $FCX $SNAP $BABA $WFC $RCL $BB $HSBC $LYG $TEVA $C $OXY $JNJ $LYFT $LK $SBUX $BA $M https://t.co/UFtiGgmsSP\n@APompliano @ErnestMEdsel1 $SPY $MSFT $AMZN $FB $SBUX $JPM $CMG $JNJ $BABA $NKE $CCL $UNH $NVDA $DIS $VZ $TSLA $QQQ $MSI $WMT $NOW $NFLX $DECK $MELI $BKNG $PLNT $BA $CCL $WYNN $RCL $AAL\nRT @UPBOptionMil: Some of todays top stock option open interest changes 4.2.20 $AAL $GM $X $FCX $BABA $GOLD $CCL $TEVA $MAS https://t.co/4K\u2026\n",
+    "summary": "It seems like you're not able to understand that you want me to help you to summarize the text. This text. It appears to be about stocks news. \n\nThe article about market news summary.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

@@ -1,0 +1,13 @@
+{
+    "ticker": "BABA",
+    "date": "2020-07-04",
+    "tweet_data": [
+        "RT @psk2329: $BABA weekly. Setting up a nice inverted H&amp;S look for breakout to new ATHs. China internet stocks been hot $KWEB, we caught a\u2026",
+        "RT @stocktwits12: $IDEX $GOOG $AAPL $SPY $AMZN $TDOC $TSLA $COST $BA $NFLX $NVDA $TWTR $ZM $BABA $FB $DOW $MSFT $QQQ $BB\n$TSLA $AYRO $NKLA\u2026",
+        "2x Your Money Multiple Times (This Year) - https://t.co/Wbg5xO4F2D\n\n$BTC $MSFT $FB $NVDA $BYND $TWLO $BKNG $AMZN $GOOGL $BIDU $BABA $DIS $AAPL $GS $TSLA $NFLX $AMD $BA $CRM $LULU $ROKU"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: RT @psk2329: $BABA weekly. Setting up a nice inverted H&amp;S look for breakout to new ATHs. China internet stocks been hot $KWEB, we caught a\u2026\nRT @stocktwits12: $IDEX $GOOG $AAPL $SPY $AMZN $TDOC $TSLA $COST $BA $NFLX $NVDA $TWTR $ZM $BABA $FB $DOW $MSFT $QQQ $BB\n$TSLA $AYRO $NKLA\u2026\n2x Your Money Multiple Times (This Year) - https://t.co/Wbg5xO4F2D\n\n$BTC $MSFT $FB $NVDA $BYND $TWLO $BKNG $AMZN $GOOGL $BIDU $BABA $DIS $AAPL $GS $TSLA $NFLX $AMD $BA $CRM $LULU $ROKU\n",
+    "summary": "The text: \nHere is a summary of the given text:\nThe article is not provided news about the following:\n\n**. Here are some key points from the news articles on the stock market news and financial news. The stock market trends in the week. The S&P 2022. \n\n* 1. The Dow Jones 2023. The S&P 500 index closed at 30,000.6% higher 0.8% lower than the S&P 2022. 2022 1000. 2023 2022. 2022 2022.2. 2022 2022 2022.2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 2022 202",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

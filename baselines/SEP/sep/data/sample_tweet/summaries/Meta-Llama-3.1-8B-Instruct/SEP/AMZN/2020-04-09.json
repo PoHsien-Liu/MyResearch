@@ -1,0 +1,15 @@
+{
+    "ticker": "AMZN",
+    "date": "2020-04-09",
+    "tweet_data": [
+        "$AMZN NEW ARTICLE : Amazon says it could soon begin testing some warehouse workers for the coronavirus https://t.co/HhjXPMF42v Get all the latest $AMZN related news here : https://t.co/OgSjJfshVt https://t.co/QS247pgobW",
+        "BOOM \ud83d\udcb0\ud83d\udcb0 Come Join US \n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For  Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts  Paypal monthly link in bio, $149.99 DM for biweekly link $84.99 #trading #optionstrader #Money https://t.co/kgQyF8bQc5",
+        "RT @Sandro_power: Live stream on now $AAPL $SPY $AMZN $BA $AMD I explain a market update and the big picture    https://t.co/U9wfHSXorE. af\u2026",
+        "RT @GoingGreenPicks: $AMZN, MIST READ ARTICLE FOR SHORTS AND LONGS: https://t.co/herAvAXx8k $GRNF $GE $BBY $CGC $NFLX $FB $GM $LUV $UAL $MT\u2026",
+        "RT @Sandro_power: Live stream tonight on my YouTube Channel  PowerTargetTrades at 9:45pm EST Canada Fiqure out your time zone to match my t\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for AMZN stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: $AMZN NEW ARTICLE : Amazon says it could soon begin testing some warehouse workers for the coronavirus https://t.co/HhjXPMF42v Get all the latest $AMZN related news here : https://t.co/OgSjJfshVt https://t.co/QS247pgobW\nBOOM \ud83d\udcb0\ud83d\udcb0 Come Join US \n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For  Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts  Paypal monthly link in bio, $149.99 DM for biweekly link $84.99 #trading #optionstrader #Money https://t.co/kgQyF8bQc5\nRT @Sandro_power: Live stream on now $AAPL $SPY $AMZN $BA $AMD I explain a market update and the big picture    https://t.co/U9wfHSXorE. af\u2026\nRT @GoingGreenPicks: $AMZN, MIST READ ARTICLE FOR SHORTS AND LONGS: https://t.co/herAvAXx8k $GRNF $GE $BBY $CGC $NFLX $FB $GM $LUV $UAL $MT\u2026\nRT @Sandro_power: Live stream tonight on my YouTube Channel  PowerTargetTrades at 9:45pm EST Canada Fiqure out your time zone to match my t\u2026\n",
+    "summary": "It looks like you want to help you are trying to summarize the text. Here's not understand what you're looking for a summary of the article about news. I'll provide. Here's content. I'll do my best try to summarize the news. \n\nHere's the article. \n\nIt seems like you're looking for news about Amazon Web page. Here's article. Here's news. Here's summary:\n\nAmazon's a summary is: Amazon's news. Here's article about Amazon's news. Here's article is about Amazon's summary. Here's news. Here's summary.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

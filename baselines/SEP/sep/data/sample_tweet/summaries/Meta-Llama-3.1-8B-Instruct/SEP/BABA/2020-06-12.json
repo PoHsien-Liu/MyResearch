@@ -1,0 +1,12 @@
+{
+    "ticker": "BABA",
+    "date": "2020-06-12",
+    "tweet_data": [
+        "BOOM \ud83d\udcb0\ud83d\udcb0 Come Join The Pro\n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts -Monthly link in bio. https://t.co/5KmDlxlKof",
+        "RT @Reveretrading: June 12 Plan\n\n*Click on picture to expand*\n\n#ES_F $SPX $SPY $QQQ $NDX $NQ_F $IWM $UVY $COST $AAPL $FB $AMZN $NFLX $TSLA\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: BOOM \ud83d\udcb0\ud83d\udcb0 Come Join The Pro\n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts -Monthly link in bio. https://t.co/5KmDlxlKof\nRT @Reveretrading: June 12 Plan\n\n*Click on picture to expand*\n\n#ES_F $SPX $SPY $QQQ $NDX $NQ_F $IWM $UVY $COST $AAPL $FB $AMZN $NFLX $TSLA\u2026\n",
+    "summary": "It looks like you want to help with the text is not understand what you need to summarize the text. I will summarize the article about the news. Here is about. Here's a summary of the news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

@@ -1,0 +1,12 @@
+{
+    "ticker": "BABA",
+    "date": "2020-05-09",
+    "tweet_data": [
+        "Florida Trader Hacks Citigroup Scanner For Massive 24 Hour Windfalls - https://t.co/PN0uJTDotY\n\n$BTC $MSFT $FB $NVDA $BYND $TWLO $BKNG $AMZN $GOOGL $BIDU $BABA $DIS $AAPL $GS $TSLA $NFLX $AMD $BA $CRM $LULU $ROKU",
+        "RT @InvertDividend: Mis Objetivos USA \ud83c\uddfa\ud83c\uddf8. (Precio Objetivo)\n$KO (40$)\n$JNJ (105$)\n$MCD (150$)\n$HSY (105$)\n$TROW (92$)\n$DIS (100$)\n$SBUX (60\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: Florida Trader Hacks Citigroup Scanner For Massive 24 Hour Windfalls - https://t.co/PN0uJTDotY\n\n$BTC $MSFT $FB $NVDA $BYND $TWLO $BKNG $AMZN $GOOGL $BIDU $BABA $DIS $AAPL $GS $TSLA $NFLX $AMD $BA $CRM $LULU $ROKU\nRT @InvertDividend: Mis Objetivos USA \ud83c\uddfa\ud83c\uddf8. (Precio Objetivo)\n$KO (40$)\n$JNJ (105$)\n$MCD (150$)\n$HSY (105$)\n$TROW (92$)\n$DIS (100$)\n$SBUX (60\u2026\n",
+    "summary": "It looks like you want to summarize the text is not understand what you are trying to extract the news article about the news from the following:\n\nThe article. Here is about the following summary of the news. \n\nFlorida's a news: \nFlorida man arrested for the following the stock market news. The Dow Jones day. The S&P 24/FT $FT $FT $T $NV $B $B $B $GO $GO $GO $B $GO $A $A $A $A $A $S $ $NFL $ $ $UL $ $K $U $R $D $U dividend USA \n$ (Jet 10.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

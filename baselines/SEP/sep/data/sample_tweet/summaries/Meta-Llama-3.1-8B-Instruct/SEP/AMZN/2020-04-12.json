@@ -1,0 +1,16 @@
+{
+    "ticker": "AMZN",
+    "date": "2020-04-12",
+    "tweet_data": [
+        "You'll Be Shocked to Find Out What ETF\u2019s the Fed Is Buying - my article for @crushthestreet https://t.co/OdgqPb1fal $SPY $QQQ $DJIA $DIA #stockmarket #investing #finance #stocks #gold #silver $SLV $TWTR $GLD $AAPL $TSLA $AMZN $NFLX $AMD $INTC #economy #fed $HYG $JNK #bonds #etfs",
+        "RT @vincent13031925: Biggest mistakes of the century:\n\nFrom before,\n\nApple $AAPL is only a PC maker\n\nAmazon $AMZN is only a bookstore \n\nGoo\u2026",
+        "RT @WaltStreetPro: Oh man... Now we know who is advising the Fed \ud83d\ude02\ud83d\ude02 \n\n$SPY $QQQ $AMZN $AAPL $MSFT https://t.co/fEHCqhFnT3",
+        "RT @WingGirlTrade: OPTIONS &amp; CANDLESTICK CHARTING Training Courses \n\n** Learn To Trade Options (Course) https://t.co/zEPwvM6ZNk\n\n** Underst\u2026",
+        "RT @mTradingMedia: FREE A.I. \"Trade of the Week\" being released Monday morning.\nYou will get entry,exit &amp; target price points, with chart a\u2026",
+        "RT @TrendSpider: $AMZN #AMZN Largest ascending triangle ever? https://t.co/NjjlS4PIoD"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for AMZN stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: You'll Be Shocked to Find Out What ETF\u2019s the Fed Is Buying - my article for @crushthestreet https://t.co/OdgqPb1fal $SPY $QQQ $DJIA $DIA #stockmarket #investing #finance #stocks #gold #silver $SLV $TWTR $GLD $AAPL $TSLA $AMZN $NFLX $AMD $INTC #economy #fed $HYG $JNK #bonds #etfs\nRT @vincent13031925: Biggest mistakes of the century:\n\nFrom before,\n\nApple $AAPL is only a PC maker\n\nAmazon $AMZN is only a bookstore \n\nGoo\u2026\nRT @WaltStreetPro: Oh man... Now we know who is advising the Fed \ud83d\ude02\ud83d\ude02 \n\n$SPY $QQQ $AMZN $AAPL $MSFT https://t.co/fEHCqhFnT3\nRT @WingGirlTrade: OPTIONS &amp; CANDLESTICK CHARTING Training Courses \n\n** Learn To Trade Options (Course) https://t.co/zEPwvM6ZNk\n\n** Underst\u2026\nRT @mTradingMedia: FREE A.I. \"Trade of the Week\" being released Monday morning.\nYou will get entry,exit &amp; target price points, with chart a\u2026\nRT @TrendSpider: $AMZN #AMZN Largest ascending triangle ever? https://t.co/NjjlS4PIoD\n",
+    "summary": "I apologize, but I'm not sure I don't understand what you're trying to help you want me to summarize the text. Here's summary the news article about the news. Please provide a brief summary of the news. Here are some key points from the main points:\n\n* \nThe Federal Reserve cuts interest rate hike, stocks, market, gold, silver, and the US dollar, and the economy, and inflation, and trade. The FED, and the biggest news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

@@ -1,0 +1,14 @@
+{
+    "ticker": "BABA",
+    "date": "2020-08-01",
+    "tweet_data": [
+        "$MEDH IS ON FIRE ON TWITTER \n\n$SPY $SPX $QQQ $ES_F $NQ_F $RTY_F $ZB_F $GC_F $NDX $RUT $AAPL $NFLX $AMZN $TSLA $FB $MSFT $DIA $NDX $IWM $QCOM $GDX $DAX $BYND $TWTR $GLD $SLV $GE_F $BABA $TLT $LYFT $VXX $TVIX $VIX $XLE $XOM $JPM $GS $GOOG $DIS $IBM #Options https://t.co/QXtG0E6qn9",
+        "RT @saxena_puru: 1) Portfolio summary - July-end\n\n$ADYEY $AYX $BABA $CRWD $DAO $DDOG $DOCU $ETSY $LVGO $MELI $NCNO $OKTA $ROKU $SE $SHOP $S\u2026",
+        "$SGRY $PRVB $TXN $SHOP $EXAS  $CCI  $ANET $WIX $CME  $A $AAPL $AMD $BABA $GOOG $AMZN $AKER $T $AUPH $AYTU $ATVI $GOOGL $AAOI $ABIO $ACB.CA $AA $AAL $AAXN $AAAP $AAVL\nTo enhance your experience in trading and get instant help click here https://t.co/xxVeBWYYBb https://t.co/1vQLbjAlGn",
+        "RT @Desert_Trader81: Anyone have any chart requests?\n\n30 RT and I'll chart every request. \n\nOtherwise, I'll focus on posting only the best\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: $MEDH IS ON FIRE ON TWITTER \n\n$SPY $SPX $QQQ $ES_F $NQ_F $RTY_F $ZB_F $GC_F $NDX $RUT $AAPL $NFLX $AMZN $TSLA $FB $MSFT $DIA $NDX $IWM $QCOM $GDX $DAX $BYND $TWTR $GLD $SLV $GE_F $BABA $TLT $LYFT $VXX $TVIX $VIX $XLE $XOM $JPM $GS $GOOG $DIS $IBM #Options https://t.co/QXtG0E6qn9\nRT @saxena_puru: 1) Portfolio summary - July-end\n\n$ADYEY $AYX $BABA $CRWD $DAO $DDOG $DOCU $ETSY $LVGO $MELI $NCNO $OKTA $ROKU $SE $SHOP $S\u2026\n$SGRY $PRVB $TXN $SHOP $EXAS  $CCI  $ANET $WIX $CME  $A $AAPL $AMD $BABA $GOOG $AMZN $AKER $T $AUPH $AYTU $ATVI $GOOGL $AAOI $ABIO $ACB.CA $AA $AAL $AAXN $AAAP $AAVL\nTo enhance your experience in trading and get instant help click here https://t.co/xxVeBWYYBb https://t.co/1vQLbjAlGn\nRT @Desert_Trader81: Anyone have any chart requests?\n\n30 RT and I'll chart every request. \n\nOtherwise, I'll focus on posting only the best\u2026\n",
+    "summary": "It seems like you want to summarize the text.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

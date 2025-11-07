@@ -1,0 +1,13 @@
+{
+    "ticker": "BABA",
+    "date": "2020-04-03",
+    "tweet_data": [
+        "BOOM \ud83d\udcb0\ud83d\udcb0 Come Join US \n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For  Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts  Paypal monthly link in bio, $149.99 DM for biweekly link $84.99 #trading #optionstrader #Money https://t.co/W3jn0EgqzY",
+        "RT @DeItaOne: NEW YORK GOVERNOR CUOMO SAYS WORKING WITH ALIBABA ON SOURCING MATERIALS FROM CHINA\n$BABA",
+        "$LGND  Support and Enable Potential Coronavirus Treatments $CPE $ABT $ILMN $BRKK $ABCE $CHTR $BIEI $BA $IGEX $MFA $KWBT $TPTW $CYDY $LGNDZ $HD $AMD $MU $CTYX $DECN $TOPS $AAPL $VVUS $TMDI $MSFT $GTE $TSLA $FB $AMZN $BABA $PCTL $INTC $CSCO $CCL $QEP $SPOM $LGND $NSPX https://t.co/7inujyyylc"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: BOOM \ud83d\udcb0\ud83d\udcb0 Come Join US \n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For  Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts  Paypal monthly link in bio, $149.99 DM for biweekly link $84.99 #trading #optionstrader #Money https://t.co/W3jn0EgqzY\nRT @DeItaOne: NEW YORK GOVERNOR CUOMO SAYS WORKING WITH ALIBABA ON SOURCING MATERIALS FROM CHINA\n$BABA\n$LGND  Support and Enable Potential Coronavirus Treatments $CPE $ABT $ILMN $BRKK $ABCE $CHTR $BIEI $BA $IGEX $MFA $KWBT $TPTW $CYDY $LGNDZ $HD $AMD $MU $CTYX $DECN $TOPS $AAPL $VVUS $TMDI $MSFT $GTE $TSLA $FB $AMZN $BABA $PCTL $INTC $CSCO $CCL $QEP $SPOM $LGND $NSPX https://t.co/7inujyyylc\n",
+    "summary": "It looks like you're having trouble understanding what you are trying to summarize a bit of the text. I'll help you want to extract the news article about news from this. Here's content. I'll try to provide summary. \n\nIt seems like you want to summarize the news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

@@ -1,0 +1,16 @@
+{
+    "ticker": "AMZN",
+    "date": "2020-04-11",
+    "tweet_data": [
+        "Stocks will revisit their #coronavirus crash low, and here\u2019s when to expect it https://t.co/P5yS0dkbIW $SPY $QQQ $DJIA $DIA #stockmarket #investing #finance #stocks #gold #silver $SLV $TWTR $GLD $AAPL $TSLA $AMZN $NFLX $AMD $INTC #economy",
+        "RT @vincent13031925: Biggest mistakes of the century:\n\nFrom before,\n\nApple $AAPL is only a PC maker\n\nAmazon $AMZN is only a bookstore \n\nGoo\u2026",
+        "RT @jscherniack: Scan 4/13/20 \n\nhttps://t.co/k4z2f5tvMr\n\n$LVGO $CHWY $AAPL $AMZN $NFLX $HAL $SLB $BBBY $WYNN $USO $OXY $FB $SHOP ++++ more\u2026",
+        "#COVID19 $AMZN $ibio $AAPL $GOOG $FB $TSLA $AIM $f $SONA $NYMT $PFE $T $BRK.A $BRK.B #COVID\u30fc19 #vaccine \n\n$VXL\n\nMTBUVAX - TREATMENT \n\nhttps://t.co/EcDRz6UHHF",
+        "RT @duckman1717: Watch List: $AMZN, $DXCM, $IPHI, $NVDA, $AMD, $CNC, $AMED, $ZM, $DOCU, $NET, $LVGO, $TEAM, $NFLX, $NLOK, $QLYS, $OKTA, $BY\u2026",
+        "RT @arnabch01: @FriseSally @Marinella_Maria @MariangelaSant8 @sminaev2015 @angelicagallegs @YukariKingdom18 @mhall55nine @eoff_sylvia @Mont\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for AMZN stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: Stocks will revisit their #coronavirus crash low, and here\u2019s when to expect it https://t.co/P5yS0dkbIW $SPY $QQQ $DJIA $DIA #stockmarket #investing #finance #stocks #gold #silver $SLV $TWTR $GLD $AAPL $TSLA $AMZN $NFLX $AMD $INTC #economy\nRT @vincent13031925: Biggest mistakes of the century:\n\nFrom before,\n\nApple $AAPL is only a PC maker\n\nAmazon $AMZN is only a bookstore \n\nGoo\u2026\nRT @jscherniack: Scan 4/13/20 \n\nhttps://t.co/k4z2f5tvMr\n\n$LVGO $CHWY $AAPL $AMZN $NFLX $HAL $SLB $BBBY $WYNN $USO $OXY $FB $SHOP ++++ more\u2026\n#COVID19 $AMZN $ibio $AAPL $GOOG $FB $TSLA $AIM $f $SONA $NYMT $PFE $T $BRK.A $BRK.B #COVID\u30fc19 #vaccine \n\n$VXL\n\nMTBUVAX - TREATMENT \n\nhttps://t.co/EcDRz6UHHF\nRT @duckman1717: Watch List: $AMZN, $DXCM, $IPHI, $NVDA, $AMD, $CNC, $AMED, $ZM, $DOCU, $NET, $LVGO, $TEAM, $NFLX, $NLOK, $QLYS, $OKTA, $BY\u2026\nRT @arnabch01: @FriseSally @Marinella_Maria @MariangelaSant8 @sminaev2015 @angelicagallegs @YukariKingdom18 @mhall55nine @eoff_sylvia @Mont\u2026\n",
+    "summary": "It looks like you are trying to summarize the text is not understand what you want to extract the news article about the news. Here is about stocks and extract the summary of the following:\nThe news. \nStock market news is the stock market and finance and gold and economy.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

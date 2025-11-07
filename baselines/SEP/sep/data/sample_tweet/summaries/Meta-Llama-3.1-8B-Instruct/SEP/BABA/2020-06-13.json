@@ -1,0 +1,12 @@
+{
+    "ticker": "BABA",
+    "date": "2020-06-13",
+    "tweet_data": [
+        "Options Trading Pro Cumulative P&amp;L for 6/8-6/12 $30,540.00\ud83d\udcb0BOOM \ud83e\udd11 Join US $fb $aapl $amzn $nflx $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For Transparency Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts. Sign up link in bio. #jointhepro https://t.co/1lwphW0hBy",
+        "RT @InvestingInTech: The trend is your friend!\n- War on cash: $MA $V $PYPL \n- Cloud solutions: $CRM $NOW $VEEV $ADBE\n- E-commerce: $AMZN $M\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: Options Trading Pro Cumulative P&amp;L for 6/8-6/12 $30,540.00\ud83d\udcb0BOOM \ud83e\udd11 Join US $fb $aapl $amzn $nflx $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For Transparency Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts. Sign up link in bio. #jointhepro https://t.co/1lwphW0hBy\nRT @InvestingInTech: The trend is your friend!\n- War on cash: $MA $V $PYPL \n- Cloud solutions: $CRM $NOW $VEEV $ADBE\n- E-commerce: $AMZN $M\u2026\n",
+    "summary": "It looks like you want to help with the text.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

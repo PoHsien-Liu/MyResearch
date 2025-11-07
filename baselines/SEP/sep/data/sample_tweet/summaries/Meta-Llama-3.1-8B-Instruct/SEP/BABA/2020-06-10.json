@@ -1,0 +1,15 @@
+{
+    "ticker": "BABA",
+    "date": "2020-06-10",
+    "tweet_data": [
+        "BOOM \ud83d\udcb0\ud83d\udcb0 Come Join The Pro\n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts -Monthly link in bio. https://t.co/BZTkJZXr5u",
+        "RT @LlcBillionaire: $HDii a lot of people ask why this merger is so CHEAP  0.15 simple to IPO on to NASDAQ like $CHL $BABA $BIDU $NOK did\u2026",
+        "RT @Reveretrading: As promised, here's the mid morning report\n\nPlease RT or Like so everyone can benefit from it. \n\n#ES_F $SPX $SPY $QQQ #N\u2026",
+        "RT @charly1030284: Jjajaja\u2026 Yo se lo que es $BABA... Pura madre que temblaba! se muy bien lo que quieren los pinches tiburones. Y no esta d\u2026",
+        "RT @9to5investing: Nikola Motor Company Stock- Is NKLA Headed to $100+ Very Soon? \n---\nhttps://t.co/F1pND7NKJP\n----\n$NKLA $VTIQ $TSLA $BABA\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: BOOM \ud83d\udcb0\ud83d\udcb0 Come Join The Pro\n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts -Monthly link in bio. https://t.co/BZTkJZXr5u\nRT @LlcBillionaire: $HDii a lot of people ask why this merger is so CHEAP  0.15 simple to IPO on to NASDAQ like $CHL $BABA $BIDU $NOK did\u2026\nRT @Reveretrading: As promised, here's the mid morning report\n\nPlease RT or Like so everyone can benefit from it. \n\n#ES_F $SPX $SPY $QQQ #N\u2026\nRT @charly1030284: Jjajaja\u2026 Yo se lo que es $BABA... Pura madre que temblaba! se muy bien lo que quieren los pinches tiburones. Y no esta d\u2026\nRT @9to5investing: Nikola Motor Company Stock- Is NKLA Headed to $100+ Very Soon? \n---\nhttps://t.co/F1pND7NKJP\n----\n$NKLA $VTIQ $TSLA $BABA\u2026\n",
+    "summary": "I couldn't understand that you want to help you with summarizing the text.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

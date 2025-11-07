@@ -1,0 +1,15 @@
+{
+    "ticker": "AMZN",
+    "date": "2020-04-06",
+    "tweet_data": [
+        "ABOUT TO GO DOWN IN 10MIN. Come join $SPY $QQQ $AAPL $BABA $NVDA $TSLA $AMD $TWTR $FB $MU $AMZN $NFLX $MSFT $AMZN https://t.co/6l200EzjlZ https://t.co/bT0CyXQWKP",
+        "RT @DeItaOne: Most invested stocks by UK clients on the etoro investment platform - March 2020\n$TSLA $AMZN $MSFT https://t.co/SPfeQOhXtX",
+        "RT @arnabch01: @FriseSally @Marinella_Maria @MariangelaSant8 @sminaev2015 @angelicagallegs @YukariKingdom18 @mhall55nine @eoff_sylvia @Mont\u2026",
+        "RT @gualestrit: N\u00famero de visitas a https://t.co/XRONp78lxu en las \u00faltimas semanas, comparado con el mismo periodo de 2019.\n\n$AMZN\n\nhttps:/\u2026",
+        "RT @alert_options: BOOOM this is how we do it. Our members are killing it...Join us for Transparency, Daily Powerful Watchlist, Swing &amp; Day\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for AMZN stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: ABOUT TO GO DOWN IN 10MIN. Come join $SPY $QQQ $AAPL $BABA $NVDA $TSLA $AMD $TWTR $FB $MU $AMZN $NFLX $MSFT $AMZN https://t.co/6l200EzjlZ https://t.co/bT0CyXQWKP\nRT @DeItaOne: Most invested stocks by UK clients on the etoro investment platform - March 2020\n$TSLA $AMZN $MSFT https://t.co/SPfeQOhXtX\nRT @arnabch01: @FriseSally @Marinella_Maria @MariangelaSant8 @sminaev2015 @angelicagallegs @YukariKingdom18 @mhall55nine @eoff_sylvia @Mont\u2026\nRT @gualestrit: N\u00famero de visitas a https://t.co/XRONp78lxu en las \u00faltimas semanas, comparado con el mismo periodo de 2019.\n\n$AMZN\n\nhttps:/\u2026\nRT @alert_options: BOOOM this is how we do it. Our members are killing it...Join us for Transparency, Daily Powerful Watchlist, Swing &amp; Day\u2026\n",
+    "summary": "I apologize, but it seems like you are not understand that the text is not able to extract the request. I will help you want to summarize the text. Please provide a summary of the news article about the news. Here is not found in the following:\n\n**.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

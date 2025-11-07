@@ -1,0 +1,14 @@
+{
+    "ticker": "BABA",
+    "date": "2020-07-05",
+    "tweet_data": [
+        "RT @stocktwits12: $IDEX $GOOG $AAPL $SPY $AMZN $TDOC $TSLA $COST $BA $NFLX $NVDA $TWTR $ZM $BABA $FB $DOW $MSFT $QQQ $BB\n$TSLA $AYRO $NKLA\u2026",
+        "RT @OptionsMike: $JD Just off ATH\"s has held the 21D since May 7th... very strong name.. this and $BABA only 2 I really trust in the space\u2026",
+        "RT @Reveretrading: Hope all of you had a great weekend!\n\nJuly 6 Plan \ud83d\udccc\n\n*Click on Picture to Expand* \n\nI appreciate the Likes, RT or any fe\u2026",
+        "RT @PandaOptions: Pandas Weekly Watchlist \ud83d\udc3c\n\n - $ZS calls over 113, puts under 103\n - $ROKU calls over 133, puts under 128\n - $BABA calls o\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: RT @stocktwits12: $IDEX $GOOG $AAPL $SPY $AMZN $TDOC $TSLA $COST $BA $NFLX $NVDA $TWTR $ZM $BABA $FB $DOW $MSFT $QQQ $BB\n$TSLA $AYRO $NKLA\u2026\nRT @OptionsMike: $JD Just off ATH\"s has held the 21D since May 7th... very strong name.. this and $BABA only 2 I really trust in the space\u2026\nRT @Reveretrading: Hope all of you had a great weekend!\n\nJuly 6 Plan \ud83d\udccc\n\n*Click on Picture to Expand* \n\nI appreciate the Likes, RT or any fe\u2026\nRT @PandaOptions: Pandas Weekly Watchlist \ud83d\udc3c\n\n - $ZS calls over 113, puts under 103\n - $ROKU calls over 133, puts under 128\n - $BABA calls o\u2026\n",
+    "summary": "The text: \nI apologize, but I think there was not sure what you are you mean by the text. I understand. Here is not sure you want to extract the news. I will be able to extract the news. I will do. I will try to help you. Please provide a summary of the text. Here is the news. The news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

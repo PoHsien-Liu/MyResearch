@@ -1,0 +1,13 @@
+{
+    "ticker": "AMZN",
+    "date": "2020-04-05",
+    "tweet_data": [
+        "$AMZN $GOOG $GOOGL NEW ARTICLE : Here's the Top Stock to Buy with Your Coronavirus Stimulus Check https://t.co/yfPkqyNODP Get all the latest $AMZN related news here : https://t.co/OgSjJfshVt https://t.co/v72Egwn6Vj",
+        "RT @arnabch01: @FriseSally @Marinella_Maria @MariangelaSant8 @sminaev2015 @angelicagallegs @YukariKingdom18 @mhall55nine @eoff_sylvia @Mont\u2026",
+        "RT @InvertDividend: USA \ud83c\uddfa\ud83c\uddf8. Sin compras. Alguna se acerca ligeramente a objetivo.  \n\nRadar $MMM (110$), $TROW (75$), $SBUX (48$), $DIS (80$\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for AMZN stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: $AMZN $GOOG $GOOGL NEW ARTICLE : Here's the Top Stock to Buy with Your Coronavirus Stimulus Check https://t.co/yfPkqyNODP Get all the latest $AMZN related news here : https://t.co/OgSjJfshVt https://t.co/v72Egwn6Vj\nRT @arnabch01: @FriseSally @Marinella_Maria @MariangelaSant8 @sminaev2015 @angelicagallegs @YukariKingdom18 @mhall55nine @eoff_sylvia @Mont\u2026\nRT @InvertDividend: USA \ud83c\uddfa\ud83c\uddf8. Sin compras. Alguna se acerca ligeramente a objetivo.  \n\nRadar $MMM (110$), $TROW (75$), $SBUX (48$), $DIS (80$\u2026\n",
+    "summary": "It seems like you want to understand that you are trying to summarize the text is not able to extract the news article about the news from the following text. I'll extract the news. Here is not found in this summary of the news. \nThe article.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

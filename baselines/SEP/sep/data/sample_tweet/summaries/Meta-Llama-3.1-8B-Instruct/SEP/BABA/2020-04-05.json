@@ -1,0 +1,13 @@
+{
+    "ticker": "BABA",
+    "date": "2020-04-05",
+    "tweet_data": [
+        "$ZM - Trade Idea - April 9 135C - bid/ask: 4.20/4.80\n$ZM - Swing Trade Idea - April 17 150C - bid/ask: 3.40/4.00\n\nClosed at 128.20 and held key 121 level \n\nLevels above: 129, 134, 139, 145, 150\n\n--\n$AMZN $AMD $BA $BABA $MRNA $FB $AAPL $GOOGL $NFLX $ZM $ROKU $TSLA $SPX $SPY $COST https://t.co/zbMou49zVT",
+        "@danharris @The_WolfofMMA @MasaSonCap I'm well aware.... Here's the 20-F analysis from 2018...  $BABA is the tip of the spear of the Chinese Communist Party's assault on the US financial system... I've been saying it since before the IPO...\n\nhttps://t.co/fC9LCR9Qw5",
+        "RT @InvertDividend: USA \ud83c\uddfa\ud83c\uddf8. Sin compras. Alguna se acerca ligeramente a objetivo.  \n\nRadar $MMM (110$), $TROW (75$), $SBUX (48$), $DIS (80$\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: $ZM - Trade Idea - April 9 135C - bid/ask: 4.20/4.80\n$ZM - Swing Trade Idea - April 17 150C - bid/ask: 3.40/4.00\n\nClosed at 128.20 and held key 121 level \n\nLevels above: 129, 134, 139, 145, 150\n\n--\n$AMZN $AMD $BA $BABA $MRNA $FB $AAPL $GOOGL $NFLX $ZM $ROKU $TSLA $SPX $SPY $COST https://t.co/zbMou49zVT\n@danharris @The_WolfofMMA @MasaSonCap I'm well aware.... Here's the 20-F analysis from 2018...  $BABA is the tip of the spear of the Chinese Communist Party's assault on the US financial system... I've been saying it since before the IPO...\n\nhttps://t.co/fC9LCR9Qw5\nRT @InvertDividend: USA \ud83c\uddfa\ud83c\uddf8. Sin compras. Alguna se acerca ligeramente a objetivo.  \n\nRadar $MMM (110$), $TROW (75$), $SBUX (48$), $DIS (80$\u2026\n",
+    "summary": "I will extract the following summary of the text:\nThe text:\n\nIt seems to be a bit noisy and not clear that the news article about the news is not found in the market news. The news. The stock market. The news is not the stock market is up 4. The stock. The stock. The stock market is down. The stock is down. The stock. The stock market is down. The stock is down. The stock. The stock. The stock. The stock is down. The stock is down. The stock. The stock. The stock. The stock is down. The stock. The stock. stock. The stock. The stock.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

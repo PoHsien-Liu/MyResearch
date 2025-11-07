@@ -1,0 +1,14 @@
+{
+    "ticker": "BABA",
+    "date": "2020-06-09",
+    "tweet_data": [
+        "BOOM \ud83d\udcb0\ud83d\udcb0 Come Join The Pro\n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts -Monthly link in bio. https://t.co/2KTIxZTnRF",
+        "RT @9to5investing: Nikola Motor Company Stock- Is NKLA Headed to $100+ Very Soon? \n---\nhttps://t.co/F1pND7NKJP\n----\n$NKLA $VTIQ $TSLA $BABA\u2026",
+        "RT @gualestrit: Alibaba contratar\u00e1 5,000 personas para su divisi\u00f3n de servicios en la nube.\n\nLa compa\u00f1\u00eda china es el mayor proveedor asi\u00e1ti\u2026",
+        "RT @OphirGottlieb: $BABA Alibaba Cloud To Hire 5,000 People After Global Cloud Spending Hits Record High In First Quarter https://t.co/aoBz\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: BOOM \ud83d\udcb0\ud83d\udcb0 Come Join The Pro\n$fb $aapl $amzn $nflx $googl $bidu $roku $spy $amd $nvda $tsla $ba $baba $shop For Daily Powerful Watchlist, Swing &amp; Day Option Trading Alerts -Monthly link in bio. https://t.co/2KTIxZTnRF\nRT @9to5investing: Nikola Motor Company Stock- Is NKLA Headed to $100+ Very Soon? \n---\nhttps://t.co/F1pND7NKJP\n----\n$NKLA $VTIQ $TSLA $BABA\u2026\nRT @gualestrit: Alibaba contratar\u00e1 5,000 personas para su divisi\u00f3n de servicios en la nube.\n\nLa compa\u00f1\u00eda china es el mayor proveedor asi\u00e1ti\u2026\nRT @OphirGottlieb: $BABA Alibaba Cloud To Hire 5,000 People After Global Cloud Spending Hits Record High In First Quarter https://t.co/aoBz\u2026\n",
+    "summary": "It seems like you are not able to understand that the text is a summary of the text is not clear. I will help you want to provide a summary of the news. Please summarize the article about the news. Here is about the following:\n\nThe news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

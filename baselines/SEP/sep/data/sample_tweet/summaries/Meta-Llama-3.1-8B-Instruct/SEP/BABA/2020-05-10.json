@@ -1,0 +1,13 @@
+{
+    "ticker": "BABA",
+    "date": "2020-05-10",
+    "tweet_data": [
+        "$BYND - Trade Idea - May 15th 150C - bid/ask: 2.47/2.59\n\nClosed at 133.51 on Friday.\n\nKeep an eye on the hard 135 Level this week. If it can break above it can run to 150-158 next\n\n-\n$AMZN $AMD $BA $BABA $FB $AAPL $TSLA $ROKU $TSLA $SPX $SPY $TDOC $COST $ZM $GILD $USO $NVDA $ROKU https://t.co/9CDBaVWmhv",
+        "RT @saxena_puru: 1) Secular tailwinds - much easier to swim with the tide\n\nEcommerce + online payments - YTD returns \n\n$ADYEY $BABA $ETSY $\u2026",
+        "RT @TriggerTrades: Looking at $SPY $SPX $NDX $QQQ to judge market conditions, does not paint the whole picture.\n\nYou must look at the leade\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: $BYND - Trade Idea - May 15th 150C - bid/ask: 2.47/2.59\n\nClosed at 133.51 on Friday.\n\nKeep an eye on the hard 135 Level this week. If it can break above it can run to 150-158 next\n\n-\n$AMZN $AMD $BA $BABA $FB $AAPL $TSLA $ROKU $TSLA $SPX $SPY $TDOC $COST $ZM $GILD $USO $NVDA $ROKU https://t.co/9CDBaVWmhv\nRT @saxena_puru: 1) Secular tailwinds - much easier to swim with the tide\n\nEcommerce + online payments - YTD returns \n\n$ADYEY $BABA $ETSY $\u2026\nRT @TriggerTrades: Looking at $SPY $SPX $NDX $QQQ to judge market conditions, does not paint the whole picture.\n\nYou must look at the leade\u2026\n",
+    "summary": "It seems like you want to help you are trying to summarize the text. I apologize, but it appears to be a summary of the news article about the news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

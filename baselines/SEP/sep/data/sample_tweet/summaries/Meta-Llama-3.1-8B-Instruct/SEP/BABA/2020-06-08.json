@@ -1,0 +1,12 @@
+{
+    "ticker": "BABA",
+    "date": "2020-06-08",
+    "tweet_data": [
+        "Thanks for the Amazon alert! Only bought one so took profit soon after open grinning \nhttps://t.co/8fooypATeb\n\n$AMZN $GOOG $AAPL $AMD $NVDA $TSLA $NDX $SPY $AAPL $BABA $NFLX $ROKU $BA $COST $MCD $WMT $FB $VIX $ZN_F $BA $QQQ $FB $AAPL $JPM $AAL $VISL $TLRY https://t.co/094143DylZ",
+        "RT @bgurley: Interesting topic few in SV are discussing. Combination of China-US tensions, Luckin, &amp; a desire for US listed Chinese compani\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: Thanks for the Amazon alert! Only bought one so took profit soon after open grinning \nhttps://t.co/8fooypATeb\n\n$AMZN $GOOG $AAPL $AMD $NVDA $TSLA $NDX $SPY $AAPL $BABA $NFLX $ROKU $BA $COST $MCD $WMT $FB $VIX $ZN_F $BA $QQQ $FB $AAPL $JPM $AAL $VISL $TLRY https://t.co/094143DylZ\nRT @bgurley: Interesting topic few in SV are discussing. Combination of China-US tensions, Luckin, &amp; a desire for US listed Chinese compani\u2026\n",
+    "summary": "It seems like this is not clear that you want to understand what you're looking for a summary of the text. I'll help with the news article about the news. Here's. Please provide a summary of the following:\n\nThe article is about the news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

@@ -1,0 +1,12 @@
+{
+    "ticker": "BABA",
+    "date": "2020-04-04",
+    "tweet_data": [
+        "$INQD all the way, to .005+ \ud83d\ude0f\n\n$CPE $ABT $ILMN $BRKK $ABCE $CHTR $BIEI $BA $IGEX $MFA $KWBT $TPTW $CYDY $LGNDZ $HD $AMD $MU $CTYX $DECN $TOPS $AAPL $VVUS $TMDI $MSFT $GTE $TSLA $FB $AMZN $BABA $PCTL $INTC $CSCO $CCL $QEP $SPOM $LGND $NSPX https://t.co/9zldkobEr8",
+        "RT @WallStCynic: Can\u2019t help but notice that Vladimir Putin, the Chinese Communist Party (Alibaba, Jack Ma, Joe Tsai) and Elon Musk all seem\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: $INQD all the way, to .005+ \ud83d\ude0f\n\n$CPE $ABT $ILMN $BRKK $ABCE $CHTR $BIEI $BA $IGEX $MFA $KWBT $TPTW $CYDY $LGNDZ $HD $AMD $MU $CTYX $DECN $TOPS $AAPL $VVUS $TMDI $MSFT $GTE $TSLA $FB $AMZN $BABA $PCTL $INTC $CSCO $CCL $QEP $SPOM $LGND $NSPX https://t.co/9zldkobEr8\nRT @WallStCynic: Can\u2019t help but notice that Vladimir Putin, the Chinese Communist Party (Alibaba, Jack Ma, Joe Tsai) and Elon Musk all seem\u2026\n",
+    "summary": "It seems like you want to understand that you are trying to summarize the text. I apologize for you want to summarize the news article about the news. Here is not found. Please provide a summary of the news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

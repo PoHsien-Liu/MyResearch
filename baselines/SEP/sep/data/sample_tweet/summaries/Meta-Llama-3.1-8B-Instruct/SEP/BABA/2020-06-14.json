@@ -1,0 +1,12 @@
+{
+    "ticker": "BABA",
+    "date": "2020-06-14",
+    "tweet_data": [
+        "Got to love $MSFT ! \ud83e\udd11\nDiscord group https://t.co/8fooypSu5J\nSharing is caring!\n Thanks to my mentor and top analyst\n$AMZN, $CCL, $EOG, $GILD, $PDD $GMAB, $CODX!! $AMD $NVDA $TSLA $NDX $SPY $AAPL $BABA $NFLX $ROKU $BA $COST $MCD $WMT $FB $VIX $ZN_F $SQ $DAL $BAC $NOK $AAPL $GME https://t.co/AdP9Pa8CRi",
+        "RT @bolsaperezosos: $BABA\nJack Ma nos da unas lecciones para entender por qu\u00e9 hay gente que prospera, mientras que otra no lo consigue...\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: Got to love $MSFT ! \ud83e\udd11\nDiscord group https://t.co/8fooypSu5J\nSharing is caring!\n Thanks to my mentor and top analyst\n$AMZN, $CCL, $EOG, $GILD, $PDD $GMAB, $CODX!! $AMD $NVDA $TSLA $NDX $SPY $AAPL $BABA $NFLX $ROKU $BA $COST $MCD $WMT $FB $VIX $ZN_F $SQ $DAL $BAC $NOK $AAPL $GME https://t.co/AdP9Pa8CRi\nRT @bolsaperezosos: $BABA\nJack Ma nos da unas lecciones para entender por qu\u00e9 hay gente que prospera, mientras que otra no lo consigue...\u2026\n",
+    "summary": "It seems like you are not understand that you're trying to provide a summary of the text. I apologize. I'll help you. It appears to summarize the text. However, please. Here's a summary of the news. \n\nI will try to extract the news.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}

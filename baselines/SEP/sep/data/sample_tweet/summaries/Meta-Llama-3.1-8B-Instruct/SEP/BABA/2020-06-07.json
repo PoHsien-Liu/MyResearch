@@ -1,0 +1,18 @@
+{
+    "ticker": "BABA",
+    "date": "2020-06-07",
+    "tweet_data": [
+        "@jsizzle_0 Break RSI key level here and we can push up to 231 again.\n\nBreak downwards here and look at the MAs to see where it will fall!\n\n$BABA https://t.co/9NCxxbr2s0",
+        "RT @stoolpresidente: Are you referring to buying $baba at 197?   I wish we could all have losses like that.     Whoops didn\u2019t mean to inclu\u2026",
+        "RT @JamesOwenthe3rd: $amd $nvda $tsla $fb $SPX $NDX #ES_F $SPY $AAPL $BABA $NFLX $ROKU $BA $COST $MCD $WMT $FB $VIX $ZN_F $ZB_F $TLRY $LK $\u2026",
+        "RT @EliteOptions2: $TSLA - Trade Idea - June 12 940C - bid/ask: 6.55/6.80\n\nClosed at 885 on Friday. Has been consodilating between 854 and\u2026",
+        "RT @InvestingInTech: The trend is your friend!\n- War on cash: $MA $V $PYPL \n- Cloud solutions: $CRM $NOW $VEEV $ADBE\n- E-commerce: $AMZN $M\u2026",
+        "RT @RossHaber_: My preliminary list for this weekend\u2019s Top 10 Report including $AMD $BABA $CRWD $FB $NOW $TSLA $BYND https://t.co/ucVv5vg359",
+        "RT @JuanNiqui: Voy al 93% de la cartera con Alibaba $BABA ,primer paquete de venta en 300$, no antes,el impulso alcista que se espera para\u2026",
+        "RT @InvertDividend: Mis Favoritas USA \ud83c\uddfa\ud83c\uddf8. (Precio Objetivo)\n$KO (40$)\n$JNJ (105$)\n$MCD (150$)\n$HSY (105$)\n$TROW (92$)\n$DIS (100$)\n$SBUX (60\u2026"
+    ],
+    "prompt": "Please summarize the following noisy but possible news data extracted from\nweb page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted\nanswer such as Summary: ... The news is supposed to be for BABA stock. You may put \u2019N/A\u2019 if the noisy text does\nnot have relevant information to extract.\nNews: @jsizzle_0 Break RSI key level here and we can push up to 231 again.\n\nBreak downwards here and look at the MAs to see where it will fall!\n\n$BABA https://t.co/9NCxxbr2s0\nRT @stoolpresidente: Are you referring to buying $baba at 197?   I wish we could all have losses like that.     Whoops didn\u2019t mean to inclu\u2026\nRT @JamesOwenthe3rd: $amd $nvda $tsla $fb $SPX $NDX #ES_F $SPY $AAPL $BABA $NFLX $ROKU $BA $COST $MCD $WMT $FB $VIX $ZN_F $ZB_F $TLRY $LK $\u2026\nRT @EliteOptions2: $TSLA - Trade Idea - June 12 940C - bid/ask: 6.55/6.80\n\nClosed at 885 on Friday. Has been consodilating between 854 and\u2026\nRT @InvestingInTech: The trend is your friend!\n- War on cash: $MA $V $PYPL \n- Cloud solutions: $CRM $NOW $VEEV $ADBE\n- E-commerce: $AMZN $M\u2026\nRT @RossHaber_: My preliminary list for this weekend\u2019s Top 10 Report including $AMD $BABA $CRWD $FB $NOW $TSLA $BYND https://t.co/ucVv5vg359\nRT @JuanNiqui: Voy al 93% de la cartera con Alibaba $BABA ,primer paquete de venta en 300$, no antes,el impulso alcista que se espera para\u2026\nRT @InvertDividend: Mis Favoritas USA \ud83c\uddfa\ud83c\uddf8. (Precio Objetivo)\n$KO (40$)\n$JNJ (105$)\n$MCD (150$)\n$HSY (105$)\n$TROW (92$)\n$DIS (100$)\n$SBUX (60\u2026\n",
+    "summary": "I cannot understand that you want to help with the text.",
+    "model": "Meta-Llama-3.1-8B-Instruct",
+    "method": "SEP"
+}
