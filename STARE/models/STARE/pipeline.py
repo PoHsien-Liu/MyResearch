@@ -203,8 +203,8 @@ def _parse_llm_json(resp_text: str, ticker: str) -> Dict:
     content = resp_text or ""
     try:
         extracted = _extract_first_json(content)
-        cleaned = re.sub(r",\\s*}", "}", extracted)
-        cleaned = re.sub(r",\\s*]", "]", cleaned)
+        cleaned = re.sub(r",\s*}", "}", extracted)
+        cleaned = re.sub(r",\s*]", "]", cleaned)
         if cleaned.count("{") != cleaned.count("}") or cleaned.count("[") != cleaned.count("]"):
             raise ValueError("LLM output appears truncated or unbalanced.")
         return json.loads(cleaned)
@@ -213,17 +213,6 @@ def _parse_llm_json(resp_text: str, ticker: str) -> Dict:
             f"Failed to parse factors JSON for {ticker}: {exc}. "
             f"Raw response (first 400 chars): {content[:400]!r}"
         ) from exc
-
-
-def _build_factor_prompt(ticker: str) -> PromptLike:
-    system_text = (
-        "You are a financial analyst who understands common drivers of stock price movements for publicly listed companies.\n"
-        "Your task is to list the most important types of events and factors that typically move the stock price of a given company.\n"
-        "Respond in strict JSON with keys: ticker, factors[name, description, keywords]."
-    )
-    user_text = f"""Ticker: {ticker}
-Please output the JSON object described above."""
-    return PromptLike(system=system_text, user=user_text)
 
 
 def generate_factors(
@@ -274,30 +263,11 @@ def generate_factors(
     )
 
 
-# -----------------------------------------------------------------------------
-# Query generation
-# -----------------------------------------------------------------------------
-
-
-def _flatten_factors_for_prompt(factors_data: Dict) -> str:
-    lines: List[str] = []
-    factors = factors_data.get("factors", [])
-    for item in factors:
-        name = item.get("name") or ""
-        desc = item.get("description") or ""
-        kws = item.get("keywords") or []
-        if isinstance(kws, str):
-            kws = [kws]
-        kw_text = ", ".join(str(k).strip() for k in kws if str(k).strip())
-        lines.append(f"- {name} (keywords: {kw_text}) - {desc}")
-    return "\n".join(lines)
-
-
 def _parse_queries_json(resp_text: str, ticker: str) -> List[str]:
     content = resp_text or ""
     extracted = _extract_first_json(content)
-    cleaned = re.sub(r",\\s*}", "}", extracted)
-    cleaned = re.sub(r",\\s*]", "]", cleaned)
+    cleaned = re.sub(r",\s*}", "}", extracted)
+    cleaned = re.sub(r",\s*]", "]", cleaned)
     try:
         data = json.loads(cleaned)
     except Exception as exc:
@@ -454,45 +424,6 @@ def _build_events_block(retrieved: List[RetrievedDoc], target_ticker: str, inclu
             lines.append("Related firm news: None.")
 
     return "\n".join(lines), all_events
-
-
-def _build_prediction_prompts(
-    *,
-    ticker: str,
-    target_date: str,
-    price_context: str,
-    events_text: str,
-    include_related: bool,
-) -> Tuple[str, str]:
-    system_text = (
-        "You are a cautious equity analyst. Use ONLY the provided price trend and news; do not add outside knowledge. "
-        "If news is missing or weak, state that explicitly."
-    )
-    guidance = (
-        "- Summarize the 5-day price trend (up/down/flat) and its implication.\n"
-        "- Ground every claim on the evidence above; cite IDs like (1), (3). If no usable news, say so and rely on price trend.\n"
-        "- If using related-firm news, explain briefly how it impacts the target (e.g., supply chain/sector sentiment/peers).\n"
-        "- Keep the JSON concise; no markdown/code fences."
-    )
-    user_text = (
-        f"Target stock: {ticker}\n"
-        f"Prediction date (D0): {target_date}\n\n"
-        f"{price_context}\n\n"
-        f"{events_text}\n\n"
-        "[TASK]\n"
-        "Predict next-day movement (UP or DOWN) for the target stock (vs D-1 close) and explain with citations.\n"
-        "Follow this guidance:\n"
-        f"{guidance}\n\n"
-        "[OUTPUT JSON]\n"
-        "{\n"
-        '  "prediction": "UP" or "DOWN",\n'
-        '  "reason": "<short explanation with citations>",\n'
-        '  "used_event_ids": [<list of integers>] // empty if none\n'
-        "}"
-    )
-    if not include_related:
-        user_text = user_text.replace("If using related-firm news, explain briefly how it impacts the target (e.g., supply chain/sector sentiment/peers).\n", "")
-    return system_text, user_text
 
 
 def _write_sft_sample(
@@ -714,7 +645,7 @@ def run_base_sample(
 
         include_related = prompt_variant == "with_related"
         events_text, all_events = _build_events_block(retrieved, ticker_sel, include_related)
-        system_prompt, user_prompt = _build_prediction_prompts(
+        system_prompt, user_prompt = build_prediction_prompts(
             ticker=ticker_sel,
             target_date=date_sel,
             price_context=price_context_text,
