@@ -329,8 +329,8 @@ def generate_queries(
     backend: str = "llama",
     max_tokens: int = 256,
 ) -> QueryResult:
-    factors_text = _flatten_factors_for_prompt(factors_data)
-    prompt = _build_query_prompt(
+    factors_text = flatten_factors_for_prompt(factors_data)
+    prompt = build_query_prompt(
         ticker=ticker,
         target_date=target_date,
         start_date=start_date,

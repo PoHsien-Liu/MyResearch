@@ -8,7 +8,8 @@ from typing import Optional
 
 
 _STARE_DIR = Path(__file__).resolve().parents[1]
-_PROJECT_ROOT = _STARE_DIR.parent.parent
+# Project root should be the directory containing datasets/ and outputs/ (one level above STARE/)
+_PROJECT_ROOT = _STARE_DIR.parent
 
 
 def project_root() -> Path:
