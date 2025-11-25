@@ -9,8 +9,8 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from STARE.stare.configs.relations import RelationConfig
-from STARE.stare.models.STARE.relation_llm import RelationLLMClient
+from STARE.configs.relations import RelationConfig
+from STARE.models.STARE.relation_llm import RelationLLMClient
 
 
 def main() -> None:

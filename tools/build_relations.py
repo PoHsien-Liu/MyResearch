@@ -10,7 +10,7 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
-from STARE.stare.models.STARE.relation_builder import build_relations_file
+from STARE.models.STARE.relation_builder import build_relations_file
 
 
 def parse_args() -> argparse.Namespace:

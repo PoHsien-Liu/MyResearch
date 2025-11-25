@@ -31,7 +31,7 @@ AGENTS_LLM_BACKEND.md
 
 簡短調用範例：
 ```python
-from STARE.stare.llm_backend.inference import PromptLike, run_inference_batch
+from STARE.llm_backend.inference import PromptLike, run_inference_batch
 
 requests = [
     PromptLike(system="You are a financial analyst.",

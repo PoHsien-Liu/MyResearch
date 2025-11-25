@@ -20,7 +20,7 @@ try:
 except PermissionError:
     pass
 
-from STARE.stare.models.STARE.retriever import StareRetriever
+from STARE.models.STARE.retriever import StareRetriever
 
 
 def parse_args() -> argparse.Namespace:

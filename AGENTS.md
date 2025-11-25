@@ -90,7 +90,7 @@
 - 標籤策略：預設嚴格，Unknown/非法 prediction 視為錯（翻轉真值扣分），`unknown_policy` 可切換為 as_invalid（跳過並回報 coverage）。
 - 解釋指標（可選）：證據條數、citation 覆蓋率、解釋長度與可讀性統計。
 - 寫檔：統一以 eval.json 格式輸出，便於跨方法比較與彙整。
-- 解釋評估：`python -m STARE.stare.main --task explanation_eval --dataset_name {SEP|STOCKNET|CMIN-US|SAMPLE} --predictions_csv PATH --stock_scope {all|top1} --only_correct {true|false} --eval_llm_backend {qwen|llama|openai|gemini} --eval_llm_model MODEL --explanation_eval_output_dir outputs/... --max_eval_samples N`；輸出 `explanation_eval_samples.jsonl` 與 `explanation_eval_summary.json`。
+- 解釋評估：`python -m STARE.main --task explanation_eval --dataset_name {SEP|STOCKNET|CMIN-US|SAMPLE} --predictions_csv PATH --stock_scope {all|top1} --only_correct {true|false} --eval_llm_backend {qwen|llama|openai|gemini} --eval_llm_model MODEL --explanation_eval_output_dir outputs/... --max_eval_samples N`；輸出 `explanation_eval_samples.jsonl` 與 `explanation_eval_summary.json`。
 
 LLM 評分後端
 - 在專案根目錄建立 `stare_llm_config.yaml`（可由 `stare_llm_config.example.yaml` 複製），設定各 backend（qwen/llama）的模型、量化、tensor parallel 等參數；可用環境變數 `STARE_LLM_CONFIG` 指定路徑。
@@ -143,12 +143,12 @@ STARE（RAG）設計規範
 
 執行範例
 - STARE build_index_pipeline（以 SEP 為例，可先在 CMIN-US 驗證）
-  - python -m STARE.stare.main --task clean --dataset_name SEP --min_tokens 5 --enable_llm_filter False
-  - python -m STARE.stare.main --task extract_mentions --dataset_name SEP
-  - python -m STARE.stare.main --task embed --dataset_name SEP --embed_model sentence-transformers/all-MiniLM-L6-v2
-  - python -m STARE.stare.main --task build_index --dataset_name SEP --embed_model sentence-transformers/all-MiniLM-L6-v2 --rebuild_index
+  - python -m STARE.main --task clean --dataset_name SEP --min_tokens 5 --enable_llm_filter False
+  - python -m STARE.main --task extract_mentions --dataset_name SEP
+  - python -m STARE.main --task embed --dataset_name SEP --embed_model sentence-transformers/all-MiniLM-L6-v2
+  - python -m STARE.main --task build_index --dataset_name SEP --embed_model sentence-transformers/all-MiniLM-L6-v2 --rebuild_index
   - # 或一次串完
-  - python -m STARE.stare.main --task build_index_pipeline --dataset_name SEP --embed_model sentence-transformers/all-MiniLM-L6-v2 --min_tokens 5 --enable_llm_filter False --rebuild_index
+  - python -m STARE.main --task build_index_pipeline --dataset_name SEP --embed_model sentence-transformers/all-MiniLM-L6-v2 --min_tokens 5 --enable_llm_filter False --rebuild_index
 - TDMLLM（推論 + 評估）
   - python baselines/TDMLLM/main.py --dataset_name SEP --base_model meta-llama/Meta-Llama-3.1-8B-Instruct --batch_size 8 --seq_len 5
 - 查看長尾分佈（SEP 風格推文目錄）
