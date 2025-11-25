@@ -1,14 +1,7 @@
 import os
 import json
 from datetime import datetime
-from sklearn.metrics import (
-    matthews_corrcoef, 
-    accuracy_score, 
-    precision_score, 
-    recall_score, 
-    f1_score, 
-    confusion_matrix
-)
+
 import numpy as np
 
 def calculate_metrics(preds, labels):
@@ -28,6 +21,7 @@ def calculate_metrics(preds, labels):
         }
     """
     label_map = {'Positive': 1, 'Negative': 0}
+    unknown_predictions = 0
 
     preds_mapped = []
     labels_mapped = []
@@ -36,7 +30,11 @@ def calculate_metrics(preds, labels):
         true_label = label_map.get(l, -1)
         pred_val = label_map.get(p, -1)
 
+        if true_label == -1:
+            continue
+
         if pred_val == -1:
+            unknown_predictions += 1
             pred_val = 1 - true_label
 
         preds_mapped.append(pred_val)
@@ -50,12 +48,22 @@ def calculate_metrics(preds, labels):
         f1 = 0.0
         conf_matrix = [[0, 0], [0, 0]]
     else:
-        acc = accuracy_score(labels_mapped, preds_mapped)
-        mcc = matthews_corrcoef(labels_mapped, preds_mapped)
-        prec = precision_score(labels_mapped, preds_mapped, zero_division=0)
-        rec = recall_score(labels_mapped, preds_mapped, zero_division=0)
-        f1 = f1_score(labels_mapped, preds_mapped, zero_division=0)
-        conf_matrix = confusion_matrix(labels_mapped, preds_mapped).tolist()
+        labels_arr = np.array(labels_mapped)
+        preds_arr = np.array(preds_mapped)
+
+        tp = int(np.sum((preds_arr == 1) & (labels_arr == 1)))
+        tn = int(np.sum((preds_arr == 0) & (labels_arr == 0)))
+        fp = int(np.sum((preds_arr == 1) & (labels_arr == 0)))
+        fn = int(np.sum((preds_arr == 0) & (labels_arr == 1)))
+
+        acc = (tp + tn) / len(labels_arr)
+        prec = tp / (tp + fp) if (tp + fp) else 0.0
+        rec = tp / (tp + fn) if (tp + fn) else 0.0
+        f1 = 2 * prec * rec / (prec + rec) if (prec + rec) else 0.0
+
+        denom = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+        mcc = ((tp * tn) - (fp * fn)) / denom if denom else 0.0
+        conf_matrix = [[tn, fp], [fn, tp]]
 
     return {
         'accuracy': acc,
@@ -66,7 +74,8 @@ def calculate_metrics(preds, labels):
         'confusion_matrix': conf_matrix,
         'total': len(labels),
         'valid': len(labels_mapped),
-        'invalid': len(labels) - len(labels_mapped)
+        'invalid': len(labels) - len(labels_mapped),
+        'unknown_predictions': unknown_predictions,
     }
 
 def save_metrics(metrics_result, model_name, results_dir, dataset_name=None, experiment_duration=None):
@@ -96,6 +105,7 @@ def save_metrics(metrics_result, model_name, results_dir, dataset_name=None, exp
         "precision": metrics_result['precision'],
         "recall": metrics_result['recall'],
         "f1_score": metrics_result['f1'],
+        "unknown_predictions": metrics_result.get('unknown_predictions', 0),
         "confusion_matrix": {
             "labels": ["Negative", "Positive"],
             "matrix": metrics_result['confusion_matrix']

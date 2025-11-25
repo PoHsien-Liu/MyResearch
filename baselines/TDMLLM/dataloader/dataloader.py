@@ -1,21 +1,32 @@
 import os
-import json
-import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from tqdm import tqdm
 
 from summarize_module.summarizer import Summarizer
+from common.data.loader import list_trading_days, get_record, load_texts_for_day
+
 
 class DataLoader:
     def __init__(self, args, logger):
         self.logger = logger
         self.price_dir = args.price_dir
         self.tweet_dir = args.tweet_dir
+        self.news_csv_dir = getattr(args, "news_csv_dir", None)
         self.seq_len = args.seq_len
         self.summarizer = Summarizer(args, logger)
-        self.summary_cache = {}  # 新增快取字典
+        self.summary_cache = {}
         self.dataset_name = args.dataset_name
+        self.summary_min_tweets = getattr(args, "summary_min_tweets", 1)
+        self.summary_max_tweets = max(1, getattr(args, "summary_max_tweets", 50))
+        self.summary_batch_size = getattr(args, "summary_batch_size", getattr(args, "batch_size", 8))
+        self.train_ratio = getattr(args, "train_ratio", 0.8)
+        self.split_seed = getattr(args, "split_seed", 42)
+        self.splits_dir = getattr(args, "splits_dir", None)
+        self.label_strategy = getattr(args, "label_strategy", "legacy")
+        self.neg_threshold = getattr(args, "neg_threshold", -0.005)
+        self.pos_threshold = getattr(args, "pos_threshold", 0.0055)
+        self.neutral_skipped = 0
         if self.dataset_name == "ACL18":
             self.start_date = datetime(2014, 1, 1)
             self.end_date = datetime(2016, 1, 1)
@@ -24,119 +35,206 @@ class DataLoader:
             self.end_date = None
 
     def get_cached_summary(self, ticker, date_str):
-        """從快取中獲取摘要"""
         cache_key = f"{ticker}_{date_str}"
         return self.summary_cache.get(cache_key)
 
-    def cache_summary(self, ticker, date_str, summary):
-        """將摘要存入快取"""
-        if summary:  # 只快取有效的摘要
-            cache_key = f"{ticker}_{date_str}"
-            self.summary_cache[cache_key] = summary
-
-    def daterange(self, start_date, end_date):
-        for n in range(int((end_date - start_date).days)):
-            yield start_date + timedelta(n)
-
-
-    def get_sentiment(self, date_str, price_path):
-        price_data = np.genfromtxt(price_path, dtype=str, skip_header=False)
-        price_chg = price_data[price_data[:, 0] == date_str][0, 1].astype(float)
-
-        if price_chg > 0.0:
-            sentiment = "Positive"
-        else:
-            sentiment = "Negative"
-        return sentiment
-
-
-    def get_tweets(self, ticker, date_str):
-        tweets = []
-        tweet_path = os.path.join(self.tweet_dir, ticker, date_str)
-        
-        # 添加路徑日誌
-        self.logger.info(f"🔍 Looking for tweets at: {tweet_path}")
-        
-        if os.path.exists(tweet_path):
-            self.logger.info(f"✅ Found tweet file for {ticker} on {date_str}")
-            with open(tweet_path) as f:
-                lines = f.readlines()
-                for line in lines:
-                    tweet_obj = json.loads(line)
-                    tweets.append(tweet_obj['text'])
-            self.logger.info(f"📊 Loaded {len(tweets)} tweets")
-        else:
-            self.logger.warning(f"❌ No tweet file found for {ticker} on {date_str}")
-            
-        return tweets
-
+    def cache_summary(self, ticker, date_str, summary, label):
+        cache_key = f"{ticker}_{date_str}"
+        self.summary_cache[cache_key] = summary
+        self.summary_cache[cache_key + "_label"] = label
 
     def load(self, flag):
-        data = pd.DataFrame()
-        stock_files = os.listdir(self.price_dir)
-        
-        with tqdm(total=len(stock_files), desc="Processing Stocks", position=0, leave=True) as outer_bar:
-            for file in os.listdir(self.price_dir):
-                price_path = os.path.join(self.price_dir, file)
-                ordered_price_data = np.flip(np.genfromtxt(price_path, dtype=str, skip_header=False), 0)
-                ticker = file[:-4]
+        rows = []
+        # 1) Enumerate candidate samples from shared splits
+        samples = list_trading_days(
+            dataset_name=self.dataset_name,
+            price_dir=self.price_dir,
+            mode=flag,
+            seq_len=self.seq_len,
+            split_root=self.splits_dir,
+            train_ratio=self.train_ratio,
+            split_seed=self.split_seed,
+            label_strategy=self.label_strategy,
+            neg_threshold=self.neg_threshold,
+            pos_threshold=self.pos_threshold,
+            logger=self.logger,
+        )
+        stats = getattr(list_trading_days, "last_stats", {})
+        self.neutral_skipped = stats.get("neutral_skipped", 0)
+        if self.logger and stats:
+            self.logger.info(
+                f"Sample stats -> total_candidates={stats.get('total_candidates',0)} "
+                f"split_candidates={stats.get('split_candidates',0)} "
+                f"neutral_skipped={self.neutral_skipped} kept={stats.get('kept_samples', len(samples))}"
+            )
 
-                # 獲取有效的數據索引
-                if self.dataset_name == "ACL18":
-                    valid_indices = []
-                    for idx in range(len(ordered_price_data)):
-                        date_str = ordered_price_data[idx, 0]
-                        current_date = datetime.strptime(date_str, "%Y-%m-%d")
-                        if self.start_date <= current_date <= self.end_date:
-                            valid_indices.append(idx)
+        # 2) Build summary jobs for all unique (ticker, date) across windows
+        records_by_key = {}
+        jobs = []
+        seen_jobs = set()
 
-                    if not valid_indices:
-                        self.logger.warning(f"No data found in specified date range for {ticker}")
+        with tqdm(total=len(samples), desc="Collecting summary jobs", position=0, leave=True) as bar:
+            for sample in samples:
+                ticker = sample["ticker"]
+                end_date = sample["date"]
+
+                rec = self._safe_get_record(ticker, end_date)
+                if rec is None:
+                    bar.update(1)
+                    continue
+                records_by_key[(ticker, end_date)] = rec
+
+                window_dates = rec.get("text_window_dates") or [rec["date"]]
+                ordered_dates = []
+                seen = set()
+                for d in window_dates:
+                    if d in seen:
                         continue
-                    data_to_process = valid_indices
-                else:
-                    data_to_process = range(len(ordered_price_data))
+                    ordered_dates.append(d)
+                    seen.add(d)
 
-                tes_idx = round(len(data_to_process) * 0.8)
-                end_idx = len(data_to_process)
-                data_range = data_to_process[:tes_idx] if flag == "train" else data_to_process[tes_idx:end_idx]
+                for date_str in ordered_dates:
+                    job_key = (ticker, date_str)
+                    if job_key in seen_jobs:
+                        continue
 
-                with tqdm(total=len(data_range), desc=f"{ticker} Processing", position=1, leave=True) as inner_bar:
-                    for idx in data_range:
-                        summary_all = ""
+                    # Load texts (prefetch end_date texts from record if available)
+                    if date_str == rec["date"] and rec.get("texts") is not None:
+                        texts = rec["texts"]
+                    else:
+                        texts = load_texts_for_day(
+                            dataset_name=self.dataset_name,
+                            ticker=ticker,
+                            date=date_str,
+                            tweet_dir=self.tweet_dir,
+                            news_csv_dir=self.news_csv_dir,
+                            logger=self.logger,
+                        )
 
-                        end_date_str = ordered_price_data[idx, 0]
-                        end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
-                        start_date = end_date - timedelta(days=self.seq_len)
-                        target = self.get_sentiment(end_date_str, price_path)
-                        
-                        for seq_date in self.daterange(start_date, end_date):
-                            seq_date_str = seq_date.strftime("%Y-%m-%d")
+                    plain_texts = [t.get("text", "") for t in texts if t.get("text")]
+                    if len(plain_texts) < self.summary_min_tweets:
+                        continue
 
-                            # 檢查快取
-                            cached_summary = self.get_cached_summary(ticker, seq_date_str)
-                            if cached_summary is not None:
-                                summary = cached_summary
-                                self.logger.info(f"📋 Using cached summary for {ticker} on {seq_date_str}")
-                            else:
-                                tweet_data = self.get_tweets(ticker, seq_date_str)
-                                summary = self.summarizer.get_summary(ticker, seq_date_str, tweet_data)
-                                # 存入快取
-                                self.cache_summary(ticker, seq_date_str, summary)
+                    trimmed = plain_texts[:self.summary_max_tweets]
+                    # Skip if already cached on disk/memory
+                    if self.summarizer.get_cached_summary(ticker, date_str) is not None:
+                        seen_jobs.add(job_key)
+                        continue
 
-                            if summary and summary is not None and summary != "" and self.summarizer.is_informative(summary):
-                                summary_all = summary_all + seq_date_str + "\n" + summary + "\n\n"
+                    jobs.append({
+                        "ticker": ticker,
+                        "date": date_str,
+                        "texts": trimmed,
+                    })
+                    seen_jobs.add(job_key)
+                bar.update(1)
 
-                        if summary_all != "":
-                            data = pd.concat([data, pd.DataFrame([{
-                                'ticker': ticker,
-                                'end_date': end_date_str,  
-                                'summary': summary_all.rstrip(),
-                                'target': target
-                            }])], ignore_index=True)
+        # 3) Run batch summarization once for all jobs
+        if jobs:
+            # Chunking inside summarize_batch is handled by underlying LLM
+            self.logger.info(f"Running batch summary for {len(jobs)} jobs (batch_size={self.summary_batch_size})")
+            self.summarizer.summarize_batch(jobs, batch_size=self.summary_batch_size)
+        else:
+            self.logger.info("No new summary jobs (all cached or below min tweets)")
 
-                        inner_bar.update(1)
-                outer_bar.update(1)
+        # 4) Build rows using cached summaries only
+        with tqdm(total=len(samples), desc="Assembling samples", position=0, leave=True) as bar2:
+            for sample in samples:
+                ticker = sample["ticker"]
+                end_date = sample["date"]
+                cache_key = f"{ticker}_{end_date}"
 
-            return data
+                if cache_key in self.summary_cache:
+                    rows.append({
+                        "ticker": ticker,
+                        "end_date": end_date,
+                        "summary": self.summary_cache[cache_key],
+                        "target": self.summary_cache[cache_key + "_label"],
+                    })
+                    bar2.update(1)
+                    continue
 
+                record = records_by_key.get((ticker, end_date))
+                if record is None:
+                    bar2.update(1)
+                    continue
+
+                summary_text = self._build_window_summary(ticker, record)
+                label = record["price"]["label"]
+                self.cache_summary(ticker, end_date, summary_text, label)
+
+                rows.append({
+                    "ticker": ticker,
+                    "end_date": end_date,
+                    "summary": summary_text.strip(),
+                    "target": label,
+                })
+                bar2.update(1)
+
+        return pd.DataFrame(rows)
+
+    def _safe_get_record(self, ticker, end_date):
+        try:
+            return get_record(
+                dataset_name=self.dataset_name,
+                ticker=ticker,
+                date=end_date,
+                price_dir=self.price_dir,
+                tweet_dir=self.tweet_dir,
+                news_csv_dir=self.news_csv_dir,
+                seq_len=self.seq_len,
+                label_strategy=self.label_strategy,
+                neg_threshold=self.neg_threshold,
+                pos_threshold=self.pos_threshold,
+                logger=self.logger,
+            )
+        except Exception as exc:
+            if self.logger:
+                self.logger.warning(f"[DataLoader] skip {ticker} {end_date}: {exc}")
+            return None
+
+    def _build_window_summary(self, ticker, record):
+        window_dates = record.get("text_window_dates") or [record["date"]]
+        ordered_dates = []
+        seen = set()
+        for date_str in window_dates:
+            if date_str in seen:
+                continue
+            ordered_dates.append(date_str)
+            seen.add(date_str)
+
+        daily_summaries = []
+        for date_str in ordered_dates:
+            prefetched = record["texts"] if date_str == record["date"] else None
+            day_summary = self._summarize_single_day(ticker, date_str, prefetched_texts=prefetched)
+            if day_summary:
+                daily_summaries.append(f"[{date_str}] {day_summary}")
+
+        return "\n".join(daily_summaries).strip()
+
+    def _summarize_single_day(self, ticker, date_str, prefetched_texts=None):
+        texts = prefetched_texts
+        if texts is None:
+            texts = load_texts_for_day(
+                dataset_name=self.dataset_name,
+                ticker=ticker,
+                date=date_str,
+                tweet_dir=self.tweet_dir,
+                news_csv_dir=self.news_csv_dir,
+                logger=self.logger,
+            )
+
+        plain_texts = [t.get("text", "") for t in texts if t.get("text")]
+        if len(plain_texts) < self.summary_min_tweets:
+            return ""
+
+        trimmed = plain_texts[:self.summary_max_tweets]
+        # Prefer cached summary (populated by summarize_batch); fallback to single-call
+        cached = self.summarizer.get_cached_summary(ticker, date_str)
+        if cached is not None:
+            summary_text = cached
+        else:
+            summary_text = self.summarizer.get_summary(ticker, date_str, trimmed)
+        if summary_text and not self.summarizer.is_informative(summary_text):
+            return ""
+        return summary_text.strip()

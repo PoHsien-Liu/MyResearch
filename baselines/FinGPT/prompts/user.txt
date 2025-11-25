@@ -1,0 +1,16 @@
+Ticker: {ticker}
+Prediction date: {prediction_date}
+
+Recent {seq_len} days news:
+{news_block}
+
+Now, based on the above recent news only, predict the next trading day’s stock return direction and magnitude.
+
+Rules:
+- Focus on what may happen on the next day, not just summarize the history.
+- The next day stock return does not have to follow previous days.
+- First, reason step by step (your analysis).
+- Then, in the last line, output ONLY in this exact format:
+
+Stock Return: [number]% ([up/down])
+

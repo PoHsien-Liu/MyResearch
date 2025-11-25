@@ -12,31 +12,32 @@ class Summarizer:
         self.summarize_prompt = NEWS_SUMMARY_INSTRUCTION
         self.llm = LLaMALLM(args, logger)
         self.method_name = method_name
-        
+        self.max_new_tokens = getattr(args, "summary_max_new_tokens", 160)
+        # Runtime/context info
+        self.dataset_name = getattr(args, "dataset_name", "UNKNOWN")
+        self.model_name = getattr(args, "base_model", "model")
+
         # Initialize paths for summary storage
-        tweet_dir = Path(args.tweet_dir)
-        self.dataset_root = tweet_dir.parent
-        self.summaries_dir = self.dataset_root / "summaries"
-        self.summaries_dir.mkdir(exist_ok=True)
-        
-        # Get model name for the summary file
-        self.model_name = Path(args.base_model).name
-        self.model_dir = self.summaries_dir / self.model_name
-        self.model_dir.mkdir(exist_ok=True)
-        
-        # Create method-specific directory
-        self.method_dir = self.model_dir / self.method_name
-        self.method_dir.mkdir(exist_ok=True)
-        
-        self.logger.info(f"Summary directory: {self.summaries_dir}")
-        self.logger.info(f"Model directory: {self.model_dir}")
-        self.logger.info(f"Method directory: {self.method_dir}")
-        self.logger.info(f"Using model: {self.model_name}")
+        # Expect args.summary_cache_dir to point to OUTPUTS_DIR/cache/summaries/{dataset}/{model}/{method}
+        cache_root = getattr(args, "summary_cache_dir", None)
+        if cache_root:
+            self.cache_root = Path(cache_root)
+        else:
+            # Fallback (legacy): under tweet_dir/../summaries
+            tweet_dir = Path(args.tweet_dir)
+            self.cache_root = (tweet_dir.parent / "summaries")
+        self.cache_root.mkdir(parents=True, exist_ok=True)
+
+        # In-memory cache to avoid duplicate reads within a run
+        self.summary_cache = {}
+
+        self.logger.info(f"Summary cache root: {self.cache_root}")
+        self.logger.info(f"Using base model: {self.model_name}")
         self.logger.info(f"Using method: {self.method_name}")
 
     def get_summary_path(self, ticker, date):
         """Get the path for a summary file."""
-        ticker_dir = self.method_dir / ticker
+        ticker_dir = self.cache_root / ticker
         ticker_dir.mkdir(exist_ok=True)
         return ticker_dir / f"{date}.json"
 
@@ -61,7 +62,8 @@ class Summarizer:
             "prompt": prompt,
             "summary": summary,
             "model": self.model_name,
-            "method": self.method_name
+            "method": self.method_name,
+            "dataset": self.dataset_name,
         }
         
         summary_path = self.get_summary_path(ticker, date)
@@ -72,19 +74,36 @@ class Summarizer:
         except Exception as e:
             self.logger.error(f"Error saving summary for {ticker} on {date}: {e}")
 
+        # Update memory cache
+        key = f"{ticker}_{date}"
+        self.summary_cache[key] = summary or ""
+
+    def get_cached_summary(self, ticker: str, date: str):
+        """Return cached summary text if present (memory or disk)."""
+        key = f"{ticker}_{date}"
+        if key in self.summary_cache:
+            return self.summary_cache[key]
+
+        loaded = self.load_existing_summary(ticker, date)
+        if loaded and isinstance(loaded, dict):
+            summary = loaded.get("summary", "")
+            self.summary_cache[key] = summary or ""
+            return self.summary_cache[key]
+        return None
+
     def get_summary(self, ticker, date_str, tweets):
         # First check if summary already exists
-        existing_summary = self.load_existing_summary(ticker, date_str)
-        if existing_summary:
-            self.logger.info(f"Found existing summary for {ticker} on {date_str}")
-            return existing_summary["summary"]
+        cached = self.get_cached_summary(ticker, date_str)
+        if cached is not None:
+            self.logger.info(f"Found cached summary for {ticker} on {date_str}")
+            return cached
 
         # If no existing summary, generate new one
         summary = None
         prompt = ""
         if tweets:
             prompt = self.summarize_prompt.format(ticker=ticker, news=tweets)
-            summary = self.llm("", prompt)
+            summary = self.llm("", prompt, max_new_tokens=self.max_new_tokens)
 
         self.logger.info(f"\n📌 Summary for {ticker} on {date_str}")
         self.logger.info(f"🗞️ Tweet count: {len(tweets)}")
@@ -98,3 +117,62 @@ class Summarizer:
     def is_informative(self, summary):
         neg = r'.*[nN]o.*information.*|.*[nN]o.*facts.*|.*[nN]o.*mention.*|.*[nN]o.*tweets.*|.*do not contain.*'
         return not re.match(neg, summary)
+
+    def summarize_batch(self, jobs: list[dict], batch_size: int = 8) -> dict:
+        """
+        Batch summarize multiple days.
+
+        Args:
+            jobs: List of dicts {"ticker": str, "date": "YYYY-MM-DD", "texts": List[str]}
+            batch_size: number of jobs per batch for LLM
+
+        Returns:
+            Dict keyed by (ticker, date) -> summary string
+        """
+        if not jobs:
+            return {}
+
+        to_run = []
+        prompts = []
+        metas = []  # parallel arrays for mapping back
+
+        # Prepare prompts; skip cached
+        for job in jobs:
+            ticker = job.get("ticker")
+            date = job.get("date")
+            texts = job.get("texts") or []
+            cached = self.get_cached_summary(ticker, date)
+            if cached is not None:
+                continue
+            user_prompt = self.summarize_prompt.format(ticker=ticker, news=texts)
+            prompts.append(user_prompt)
+            metas.append((ticker, date, texts, user_prompt))
+            to_run.append(job)
+
+        results: dict = {}
+
+        if metas:
+            system_list = [""] * len(metas)
+            # Use underlying batch inference if available
+            outputs = self.llm.batch_inference(system_list, prompts, max_new_tokens=self.max_new_tokens)
+            for (ticker, date, texts, prompt), summary in zip(metas, outputs):
+                if summary is None:
+                    summary = ""
+                self.save_summary(ticker, date, texts, prompt, summary)
+                results[(ticker, date)] = summary
+
+        # For cached ones, also populate return dict
+        for job in jobs:
+            ticker = job.get("ticker")
+            date = job.get("date")
+            key = (ticker, date)
+            if key in results:
+                continue
+            cached = self.get_cached_summary(ticker, date)
+            if cached is not None:
+                results[key] = cached
+
+        self.logger.info(
+            f"Batch summarized {len(metas)} new / {len(jobs)-len(metas)} cached (batch_size={batch_size})"
+        )
+        return results

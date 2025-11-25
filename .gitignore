@@ -7,6 +7,10 @@ __pycache__/
 datasets/
 results/
 outputs/
+baselines/TDMLLM/company_descriptions_cache/
+baselines/TDMLLM/summaries/
+splits/
+stare_llm_config.yaml
 
 # Ignore all vector_store artifacts
 **/vector_store/

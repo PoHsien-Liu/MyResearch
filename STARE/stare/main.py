@@ -1,103 +1,122 @@
-# main.py
-import os
+"""STARE CLI entry point for preprocessing, indexing, and evaluation."""
+from __future__ import annotations
+
 import argparse
-from datetime import datetime
-from utils.logger import setup_logger
-from utils.seed import set_random_seed
-from configs.dataset import DATASET_PATHS
-from index.build_index import ensure_index_built
-# from models.STARE.pipeline import STAREPipeline
+import logging
+from typing import Callable, Dict
 
-def safe_name(x: str) -> str:
-    return x.replace('/', '_').replace('\\', '_').replace(':', '_')
+from STARE.stare.data_load.clean_tweets import run_clean
+from STARE.stare.data_load.cooccurrence import run_cooccurrence
+from STARE.stare.data_load.extract_mentions import run_extract_mentions
+from STARE.stare.data_load.volume_stats import run_volume_stats
+from STARE.stare.eval.explanation_eval_main import (
+    bind_explanation_eval_args,
+    run_explanation_eval_task,
+)
+from STARE.stare.eval.runner import bind_eval_subparser, run_eval
+from STARE.stare.index.build_index import run_build_index
+from STARE.stare.index.embed_texts import run_embed
+from STARE.stare.models.STARE.pipeline import run_train
 
-def resolve_paths(args):
-    base = args.base_data_dir
-    ds = DATASET_PATHS[args.dataset_name]
-    args.price_dir = args.price_dir or os.path.join(base, ds["price"], "preprocessed")
-    args.tweet_dir = args.tweet_dir or os.path.join(base, ds["tweet"], "raw")
-    if not os.path.isdir(args.price_dir):
-        raise FileNotFoundError(f"price_dir not found: {args.price_dir}")
-    if not os.path.isdir(args.tweet_dir):
-        raise FileNotFoundError(f"tweet_dir not found: {args.tweet_dir}")
 
-def prepare_results_dir(args):
-    method = "STARE"
-    safe_model = safe_name(args.base_model)
-    exp = args.experiment_name or datetime.now().strftime("%Y%m%d_%H%M%S")
-    out = os.path.join("results", args.dataset_name, method, safe_model, exp)
-    os.makedirs(out, exist_ok=True)
-    args.experiment_name = exp
-    args.results_dir = out
-    return out
+LOGGER = logging.getLogger(__name__)
 
-def snapshot_args(args, results_dir):
-    import json
-    with open(os.path.join(results_dir, "args.json"), "w", encoding="utf-8") as f:
-        json.dump(vars(args), f, ensure_ascii=False, indent=2)
 
-def build_argparser():
-    p = argparse.ArgumentParser("STARE minimal runner")
-    # 基本
-    p.add_argument("--task", type=str, default="eval", choices=["build_index", "eval"])
-    p.add_argument("--seed", type=int, default=42)
-    # 資料
-    p.add_argument("--dataset_name", type=str, default="SEP", choices=["SAMPLE","ACL18","CMIN","SEP"])
-    p.add_argument("--base_data_dir", type=str, default="/home/pohsien/Research/datasets")
-    p.add_argument("--price_dir", type=str, default=None)  
-    p.add_argument("--tweet_dir", type=str, default=None)  
-    # 索引 / 向量
-    p.add_argument("--index_dir", type=str, default="vector_store")
-    p.add_argument("--embed_model", type=str, default="sentence-transformers/all-MiniLM-L6-v2")
-    p.add_argument("--rebuild_index", action=argparse.BooleanOptionalAction, default=False)
-    # 模型與生成
-    p.add_argument("--base_model", type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct")
-    p.add_argument("--temperature", type=float, default=0.7)
-    p.add_argument("--top_p", type=float, default=0.9)
-    # 序列/批次
-    p.add_argument("--seq_len", type=int, default=5)
-    p.add_argument("--batch_size", type=int, default=32)
-    # 命名
-    p.add_argument("--experiment_name", type=str, default=None)
-    return p
+def _register_tasks() -> Dict[str, Callable[[argparse.Namespace], None]]:
+    """Return the task registry mapping CLI task name to handler."""
+    return {
+        "clean": run_clean,
+        "extract_mentions": run_extract_mentions,
+        "cooccurrence": run_cooccurrence,
+        "volume_stats": run_volume_stats,
+        "embed": run_embed,
+        "build_index": run_build_index,
+        "build_index_pipeline": _task_not_implemented,
+        "eval": run_eval,
+        "explanation_eval": run_explanation_eval_task,
+        "train": run_train,
+    }
 
-def main():
-    args = build_argparser().parse_args()
-    set_random_seed(args.seed)
 
-    resolve_paths(args)
-    results_dir = prepare_results_dir(args)
-    logger = setup_logger(results_dir)
-    logger.info(f"Task={args.task}  Dataset={args.dataset_name}")
-    logger.info(f"Price={args.price_dir}")
-    logger.info(f"Tweet={args.tweet_dir}")
-    logger.info(f"Index={args.index_dir}  Rebuild={args.rebuild_index}")
-    snapshot_args(args, results_dir)  
-
-    if args.task == "build_index":
-        ensure_index_built(
-            tweet_dir=args.tweet_dir,
-            out_dir=args.index_dir,
-            embed_model=args.embed_model,
-            rebuild=True,
-            device=None,
-            logger=logger,
-        )
-        logger.info("[DONE] build_index")
-        return
-
-    # eval 前確保索引存在
-    ensure_index_built(
-        tweet_dir=args.tweet_dir,
-        out_dir=args.index_dir,
-        embed_model=args.embed_model,
-        rebuild=args.rebuild_index,
-        device=None,
-        logger=logger,
+def _task_not_implemented(args: argparse.Namespace) -> None:
+    """Placeholder for tasks that will be implemented later."""
+    raise NotImplementedError(
+        f"Task '{args.task}' is not implemented yet."
     )
 
-    # pipe = STAREPipeline(args=args, logger=logger)
-    # pipe.eval()  
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description="STARE unified CLI for preprocessing, indexing, and evaluation",
+    )
+    parser.add_argument(
+        "--task",
+        required=True,
+        choices=[
+            "clean",
+            "extract_mentions",
+            "cooccurrence",
+            "volume_stats",
+            "embed",
+            "build_index",
+            "build_index_pipeline",
+            "eval",
+            "explanation_eval",
+            "train",
+        ],
+        help="Task to execute",
+    )
+    parser.add_argument("--dataset_name", required=True, help="Dataset identifier (SAMPLE/ACL18/CMIN/SEP)")
+    parser.add_argument("--base_model", default=None, help="Foundation model name (for eval tasks)")
+    parser.add_argument("--factor_model", default=None, help="Override model for factor generation (default: base_model or config)")
+    parser.add_argument("--query_model", default=None, help="Override model for query generation (default: base_model or config)")
+    parser.add_argument("--factor_backend", default=None, help="Backend name for factor generation (default: llama)")
+    parser.add_argument("--query_backend", default=None, help="Backend name for query generation (default: factor backend or llama)")
+    parser.add_argument("--embed_model", default=None, help="Embedding model name for indexing tasks")
+    parser.add_argument("--experiment_name", default=None, help="Optional experiment identifier")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--seq_len", type=int, default=5, help="Sequence length for baselines requiring it")
+    parser.add_argument("--batch_size", type=int, default=1, help="Batch size when applicable")
+    parser.add_argument("--rebuild_index", action="store_true", help="Rebuild FAISS index even if it exists")
+    parser.add_argument("--min_tokens", type=int, default=5, help="Min tokens for rule-based filtering")
+    parser.add_argument("--enable_llm_filter", action="store_true", help="Enable optional LLM-based cleaning filter")
+    parser.add_argument("--top_k", type=int, default=10, help="Top-k docs for retrieval/eval tasks")
+    parser.add_argument("--max_rows", type=int, default=None, help="Optional cap on rows for embedding/debug")
+    parser.add_argument("--label_strategy", default="dual_threshold", choices=["legacy", "dual_threshold"], help="Labeling strategy for returns (default: dual_threshold)")
+    parser.add_argument("--neg_threshold", type=float, default=-0.005, help="Negative threshold for dual_threshold labeling (default: -0.5%)")
+    parser.add_argument("--pos_threshold", type=float, default=0.0055, help="Positive threshold for dual_threshold labeling (default: +0.55%)")
+    # Training-specific controls
+    parser.add_argument("--test_sample", action="store_true", help="If set, only run a single sample for quick validation")
+    parser.add_argument("--sample_index", type=int, default=0, help="Index of sample to run when --test_sample is set")
+    parser.add_argument(
+        "--run_until",
+        default="price_context",
+        help="Pipeline stage to stop at (supports: price_context, factors, queries, prediction)",
+    )
+    parser.add_argument("--force_regen_factors", action="store_true", help="Regenerate factors even if cache exists")
+    parser.add_argument("--factor_max_tokens", type=int, default=800, help="Max new tokens for factor generation")
+    parser.add_argument("--query_max_tokens", type=int, default=256, help="Max new tokens for query generation")
+    parser.add_argument(
+        "--prompt_variant",
+        default="target_only",
+        choices=["target_only", "with_related"],
+        help="Prediction prompt variant (without or with related-firm news blocks)",
+    )
+    bind_eval_subparser(parser)
+    bind_explanation_eval_args(parser)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    logging.basicConfig(level=logging.INFO)
+    registry = _register_tasks()
+    handler = registry.get(args.task)
+    if handler is None:
+        raise ValueError(f"Unknown task: {args.task}")
+    handler(args)
+
 
 if __name__ == "__main__":
     main()

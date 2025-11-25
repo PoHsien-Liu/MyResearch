@@ -8,29 +8,6 @@ Tweets:
 
 Facts:"""
 
-
-MY_SUMMARIZE_INSTRUCTION = """Given today's tweets about {ticker} stock, generate a **concise, fact-based summary**.
-Avoid repeating examples verbatim and do not introduce market sentiment or speculation. Focus only on information from the tweets.
-
-Extract **only relevant financial facts**, such as:
-- Company actions (e.g., acquisitions, layoffs, expansion, legal issues)
-- Key financial data (e.g., revenue, stock price change, earnings report)
-- Economic or geopolitical events impacting {ticker}
-
-Rules:
-- Only include financial facts mentioned in today's tweets. Do not reference previous days.
-- Avoid general introductions. Start directly with the key events.
-- Use concise bullet points. Each point should be max one sentence.
-- If a tweet already states the fact concisely, quote it directly.
-- Exclude speculation, opinions, and generic financial analysis.
-- Only include numbers if explicitly mentioned in the tweets.
-
-Today's Tweets:
-{tweets}
-
-Summary:"""
-
-
 PREDICT_INSTRUCTION = """Given a list of facts, estimate their overall impact on the price movement of {ticker} stock. Give your response in this format:
 (1) Price Movement, which should be either Positive or Negative.
 (2) Explanation, which should be in a single, short paragraph.
@@ -77,10 +54,3 @@ Tweets:
 
 Summary:"""
 
-# 新增超簡單的 prompt 用於測試
-ULTRA_SIMPLE_SUMMARIZE_INSTRUCTION = """Please summarize the following noisy but possible news data extracted from
-web page HTML, and extract keywords of the news. The news text can be very noisy due to it is HTML extraction. Give formatted
-answer such as Summary: ... The news is supposed to be for {ticker} stock. You may put ’N/A’ if the noisy text does
-not have relevant information to extract.
-News: {tweets}
-"""

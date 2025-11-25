@@ -1,14 +1,31 @@
-import logging, os
+"""Logger helper utilities for STARE."""
+from __future__ import annotations
 
-def setup_logger(results_dir: str):
-    logger = logging.getLogger("STARE")
-    logger.setLevel(logging.INFO)
-    logger.handlers.clear()
-    fmt = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
-    # file
-    fh = logging.FileHandler(os.path.join(results_dir, "run.log"))
-    fh.setFormatter(fmt); logger.addHandler(fh)
-    # console
-    ch = logging.StreamHandler()
-    ch.setFormatter(fmt); logger.addHandler(ch)
+import logging
+from pathlib import Path
+from typing import Optional
+
+
+def setup_logger(name: str = "stare", log_file: Optional[Path] = None, level: int = logging.INFO) -> logging.Logger:
+    """Configure and return a logger with optional file handler."""
+    logger = logging.getLogger(name)
+    if logger.handlers:
+        return logger
+
+    logger.setLevel(level)
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    logger.addHandler(stream_handler)
+
+    if log_file:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
     return logger
+
+
+__all__ = ["setup_logger"]

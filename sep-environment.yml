@@ -1,0 +1,30 @@
+name: sep
+channels:
+  - pytorch
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - pytorch=2.5.1
+  - pytorch-cuda=12.1
+  - torchvision=0.20.1
+  - torchaudio=2.5.1
+  - pandas
+  - numpy
+  - scikit-learn
+  - tqdm
+  - sentencepiece
+  - faiss-cpu
+  - pip:
+      - transformers>=4.52.0
+      - accelerate>=0.21.1
+      - peft>=0.7.0
+      - bitsandbytes==0.39.0
+      - sentence-transformers
+      - huggingface-hub
+      - datasets
+      - pyarrow
+      - prettytable
+      - rich
+      - matplotlib

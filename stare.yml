@@ -1,0 +1,55 @@
+name: stare
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+
+dependencies:
+  # === 基本環境 ===
+  - python=3.10
+  - pip
+
+  # === PyTorch + CUDA 11.8 官方組合 ===
+  # 來自 PyTorch 官方對應表：
+  #   pytorch==2.1.2, torchvision==0.16.2, torchaudio==2.1.2, pytorch-cuda=11.8
+  - pytorch=2.1.2
+  - torchvision=0.16.2
+  - torchaudio=2.1.2
+  - pytorch-cuda=11.8
+
+  # === 科學運算與資料處理 ===
+  - numpy
+  - pandas
+  - scikit-learn
+  - sentencepiece
+  - faiss-cpu
+  - pyarrow
+  - ujson
+  - tqdm
+  - pyyaml
+
+  # 其他常見小工具（可選）
+  - typing-extensions
+  - filelock
+  - regex
+  - requests
+  - packaging
+
+  # === HuggingFace / LLM 生態：改由 pip 安裝 ===
+  - pip:
+      # transformers：為了同時支援 Llama-3.1 與 FinGPT
+      - "transformers>=4.43,<4.57"
+      # 分散式 / 推論加速
+      - "accelerate>=0.33"
+      # LoRA 用（FinGPT adapter 會用到）
+      - "peft>=0.11"
+      # 量化推論（8-bit / 4-bit）
+      - "bitsandbytes>=0.43"
+      # 句向量 / embedding（FinLang finance-embeddings-investopedia 會用到）
+      - "sentence-transformers>=3.0"
+      # HF Hub / datasets
+      - "huggingface_hub>=0.23"
+      - "datasets>=2.19"
+      # 一些 HF 生態常用的小東西，如果沒裝會自動補，不裝也沒關係
+      - "safetensors>=0.4"

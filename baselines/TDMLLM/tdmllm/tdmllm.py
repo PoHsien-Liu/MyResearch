@@ -1,26 +1,90 @@
-import re
 import os
 import json
 from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+import torch
+from torch.utils.data import DataLoader as TorchDataLoader, Dataset as TorchDataset
+from transformers import LlamaForCausalLM
+from peft import LoraConfig, get_peft_model, TaskType
 from tqdm import tqdm
-from models.llm import LLaMALLM
+from models.llm import LLaMALLM, FinGPTLLM
 from dataloader.dataloader import DataLoader
+from common.io.results import write_predictions_from_results, safe_name, write_training_data
+from common.stock_direction import extract_stock_direction
 from utils.prompts import (
-    COMPANY_DESCRIPTION_INSTRUCTION, 
-    RELATIVE_COMPANY_INSTSRUCTION, 
+    COMPANY_DESCRIPTION_INSTRUCTION,
+    RELATIVE_COMPANY_INSTSRUCTION,
     PREDICT_INSTRUCTION_SYSTEM_PROMPT,
     PREDICT_INSTRUCTION_USER_PROMPT
 )
 from utils.fewshots import PREDICT_FEW_SHOT_EXAMPLES
 from utils.metrics import calculate_metrics, save_metrics
 
+
+class PromptLabelDataset(TorchDataset):
+    """Simple dataset that encodes prompt+label pairs for causal LM fine tuning."""
+
+    def __init__(self, samples: list[dict], tokenizer, max_length: int):
+        self.samples = samples
+        self.tokenizer = tokenizer
+        self.max_length = max_length
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        sample = self.samples[idx]
+        prompt = sample["prompt_text"]
+        completion = sample["completion"]
+        prompt_encoding = self.tokenizer(
+            prompt,
+            truncation=True,
+            max_length=self.max_length,
+            return_tensors="pt",
+        )
+        full_encoding = self.tokenizer(
+            prompt + completion,
+            truncation=True,
+            max_length=self.max_length,
+            padding="max_length",
+            return_tensors="pt",
+        )
+        input_ids = full_encoding["input_ids"].squeeze(0)
+        attention_mask = full_encoding["attention_mask"].squeeze(0)
+        prompt_len = min(prompt_encoding["input_ids"].size(1), input_ids.size(0))
+        labels = input_ids.clone()
+        labels[:prompt_len] = -100
+        return {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+            "labels": labels,
+        }
+
 class TDMLLM:
     def __init__(self, args, logger):
         self.args = args
         self.logger = logger
+        self.method_name = "TDMLLM"
+        self.project_root = Path(__file__).resolve().parents[1]
+        self.company_desc_root = (
+            self.project_root
+            / "company_descriptions_cache"
+            / self.args.dataset_name
+            / safe_name(self.args.base_model)
+        )
+        self.company_desc_root.mkdir(parents=True, exist_ok=True)
+        self.summary_max_new_tokens = getattr(args, "summary_max_new_tokens", 160)
+        self.max_new_tokens_predict = getattr(args, "max_new_tokens_predict", 256)
         
         self.dataloader = DataLoader(args, logger)
-        self.llm = LLaMALLM(args, logger)
+        adapter_choice = getattr(args, "llm_adapter", "default")
+        if adapter_choice == "fingpt":
+            self.logger.info("🧩 Using FinGPT LLM adapter")
+            self.llm = FinGPTLLM(args, logger)
+        else:
+            self.llm = LLaMALLM(args, logger)
         self.company_description_prompt = COMPANY_DESCRIPTION_INSTRUCTION
         self.relative_company_prompt = RELATIVE_COMPANY_INSTSRUCTION
         self.predict_instuction = {
@@ -28,6 +92,12 @@ class TDMLLM:
             "user_prompt": PREDICT_INSTRUCTION_USER_PROMPT
         }
         self.predict_few_shot_examples = PREDICT_FEW_SHOT_EXAMPLES
+        self.mode = getattr(args, "mode", "eval")
+        self.train_epochs = max(1, getattr(args, "train_epochs", 2))
+        self.train_batch_size = max(1, getattr(args, "train_batch_size", 8))
+        self.train_max_length = getattr(args, "train_max_length", 512)
+        self.train_lr = getattr(args, "train_lr", 5e-5)
+        self.train_gradient_accumulation_steps = max(1, getattr(args, "train_gradient_accumulation_steps", 1))
 
     def eval(self):
         self.logger.info("🔍 Loading test data...")
@@ -35,102 +105,30 @@ class TDMLLM:
         data.to_csv('data.csv')
         self.logger.info(f"✅ Loaded {len(data)} samples.")
 
-        # === 原本單筆推論流程（保留備查） ===
-        '''
-        preds = []
-        labels = []
-        correct = 0
-        incorrect = 0
-        # 初始化結果保存列表
-        test_results = []
-        current_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        for index, row in tqdm(data.iterrows(), total=len(data), desc="📊 Processing Samples"):
-            try:
-                ticker = row['ticker']
-                summary = row['summary']
-                label = row['target']
-                target_date = row['end_date']  # 直接從DataFrame取得預測目標日期
-                # Step 1: 生成公司描述
-                company_prompt = self._build_relative_company_prompt(ticker)
-                if company_prompt.strip() == "":
-                    self.logger.error(f"🔥 Empty prompt generated for ticker: {ticker}")
-                    continue
-                company_description = self.llm("", company_prompt)
-                # Step 2: 生成預測
-                predict_prompt = self._build_predict_instruction(company_description, summary)
-                predict_result = self.llm(self.predict_instuction['system_prompt'], predict_prompt)
-                # Step 3: 提取股票走勢
-                self.logger.info(f"\n📌 [{index}] Ticker: {ticker}")
-                self.logger.info(f"📅 Target Date: {target_date}")
-                self.logger.info(f"📝 Summary: {summary}")
-                self.logger.info(f"🎯 Target: {label}")
-                self.logger.info(f"🧠 Prediction: {predict_result}")
-                stock_movement = self._extract_stock_return(predict_result)
-                preds.append(stock_movement)
-                labels.append(label)
-                self.logger.info(f"Stock movement: {stock_movement}, Ground Truth: {label}")
-                if stock_movement == label:
-                    correct += 1
-                else:
-                    incorrect += 1
-                # 保存測試結果
-                result_entry = self._create_result_entry(
-                    ticker=ticker,
-                    prediction_date=target_date,  # 使用DataFrame中的預測目標日期
-                    processing_date=current_date,  # 當前處理時間
-                    ground_truth=label,
-                    company_prompt=company_prompt,
-                    predict_prompt=predict_prompt,
-                    system_prompt=self.predict_instuction['system_prompt'],
-                    raw_prediction=predict_result,
-                    parsed_movement=stock_movement,
-                    summary=summary,
-                    company_description=company_description
-                )
-                test_results.append(result_entry)
-            except Exception as e:
-                self.logger.exception(f"🔥 Error during prediction for ticker {ticker}")
-                preds.append("Unknown")
-                labels.append(label)
-                incorrect += 1
-                # 即使出錯也保存結果
-                result_entry = self._create_result_entry(
-                    ticker=ticker if 'ticker' in locals() else "Unknown",
-                    prediction_date=target_date if 'target_date' in locals() else "Unknown",
-                    processing_date=current_date,
-                    ground_truth=label if 'label' in locals() else "Unknown",
-                    company_prompt=company_prompt if 'company_prompt' in locals() else "",
-                    predict_prompt=predict_prompt if 'predict_prompt' in locals() else "",
-                    system_prompt=self.predict_instuction['system_prompt'],
-                    raw_prediction=predict_result if 'predict_result' in locals() else "",
-                    parsed_movement="Unknown",
-                    summary=summary if 'summary' in locals() else "",
-                    company_description=company_description if 'company_description' in locals() else "",
-                    error=str(e)
-                )
-                test_results.append(result_entry)
-            self.logger.info(f"Correct: {correct}, Incorrect: {incorrect}")
-        self._save_test_results(test_results)
-        metrics_result = calculate_metrics(preds, labels)
-        save_metrics(metrics_result, self.args.base_model, "results", self.args.dataset_name)
-        '''
-
-        # === 新批次推論流程（移除 PredictDataset，直接用 DataFrame） ===
-        # 1. 批次產生所有 ticker 的 company_description
+        # 1. 批次產生所有 ticker 的 company_description（若 cache 無則生成）
         tickers = sorted(set(data['ticker']))
-        company_prompts = [self._build_relative_company_prompt(ticker) for ticker in tickers]
-        company_descriptions = self.llm.batch_inference([""] * len(company_prompts), company_prompts)
-        ticker2desc = dict(zip(tickers, company_descriptions))
+        ticker2desc = {}
+        missing_tickers = []
+        for ticker in tickers:
+            cached = self._load_company_description(ticker)
+            if cached is not None:
+                ticker2desc[ticker] = cached
+            else:
+                missing_tickers.append(ticker)
 
-        # 新增：將每個 company_description 存成一個檔案
-        cache_dir = "company_descriptions_cache"
-        os.makedirs(cache_dir, exist_ok=True)
-        for ticker, desc in ticker2desc.items():
-            with open(os.path.join(cache_dir, f"{ticker}.txt"), "w", encoding="utf-8") as f:
-                f.write(desc)
+        if missing_tickers:
+            company_prompts = [self._build_relative_company_prompt(ticker) for ticker in missing_tickers]
+            company_descriptions = self.llm.batch_inference(
+                [""] * len(company_prompts),
+                company_prompts,
+                max_new_tokens=self.summary_max_new_tokens,
+            )
+            for ticker, desc in zip(missing_tickers, company_descriptions):
+                ticker2desc[ticker] = desc
+                self._save_company_description(ticker, desc)
 
         # 2. 在 DataFrame 新增欄位
-        data['company_description'] = data['ticker'].map(ticker2desc)
+        data['company_description'] = data['ticker'].map(lambda t: ticker2desc.get(t, ""))
         data['system_prompt'] = self.predict_instuction['system_prompt']
         data['user_prompt'] = data.apply(
             lambda row: self._build_predict_instruction(row['company_description'], row['summary']), axis=1
@@ -138,7 +136,11 @@ class TDMLLM:
         # 3. 直接用 DataFrame 欄位做批次推論
         system_prompts = data['system_prompt'].tolist()
         user_prompts = data['user_prompt'].tolist()
-        predict_results = self.llm.batch_inference(system_prompts, user_prompts)
+        predict_results = self.llm.batch_inference(
+            system_prompts,
+            user_prompts,
+            max_new_tokens=self.max_new_tokens_predict,
+        )
         data['predict_result'] = predict_results
         data['parsed_movement'] = data['predict_result'].apply(self._extract_stock_return)
         # 4. 結果後處理與儲存
@@ -167,8 +169,18 @@ class TDMLLM:
         # 使用從 main() 傳遞過來的結果目錄
         results_dir = self.args.results_dir
         
-        self._save_test_results(test_results, results_dir)
-        
+        write_predictions_from_results(
+            test_results,
+            results_dir,
+            dataset_name=self.args.dataset_name,
+            method_name=self.method_name,
+            base_model=self.args.base_model,
+            experiment_name=self.args.experiment_name,
+            store_raw=getattr(self.args, "store_raw", True),
+            store_prompts=getattr(self.args, "store_prompts", False),
+            truncate_chars=getattr(self.args, "truncate_chars", -1),
+        )
+
         # 計算實驗總時長
         experiment_end_time = datetime.now()
         experiment_duration = experiment_end_time - self.args.experiment_start_time
@@ -179,6 +191,160 @@ class TDMLLM:
         
         metrics_result = calculate_metrics(preds, labels)
         save_metrics(metrics_result, self.args.base_model, results_dir, self.args.dataset_name, experiment_duration)
+
+    def train(self):
+        """Run a lightweight SFT pass using the shared train split."""
+        self.logger.info("🧾 Loading training data...")
+        train_data = self.dataloader.load(flag='train')
+        self.logger.info(f"✅ Loaded {len(train_data)} training samples.")
+
+        examples, records = self._prepare_training_examples(train_data)
+        training_data_dir = os.path.join(self.args.results_dir, "training_data")
+        training_data_path = write_training_data(records, training_data_dir)
+        self.logger.info(f"💾 Training prompts written to {training_data_path}")
+
+        if not examples:
+            self.logger.warning("No valid training examples; aborting SFT.")
+            return
+
+        self._dump_args()
+
+        dataset = PromptLabelDataset(examples, self.llm.tokenizer, self.train_max_length)
+        training_model = self._build_training_model()
+        _, epoch_losses = self._run_training_loop(training_model, dataset)
+
+        self._save_training_metrics(epoch_losses, len(dataset))
+
+    def _prepare_training_examples(self, data):
+        system_prompt = self.predict_instuction['system_prompt']
+        examples = []
+        records = []
+        for _, row in data.iterrows():
+            label = str(row.get("target") or "").strip()
+            if not label:
+                continue
+            summary = str(row.get("summary") or "").strip()
+            company_description = self._resolve_company_description(row["ticker"])
+            user_prompt = self._build_predict_instruction(company_description, summary)
+            prompt_text = self._flatten_training_prompt(system_prompt, user_prompt)
+            completion = self._format_training_completion(label)
+            examples.append({"prompt_text": prompt_text, "completion": completion})
+            records.append({
+                "sample_id": f"{row['ticker']}_{row['end_date']}",
+                "ticker": row["ticker"],
+                "prediction_date": row["end_date"],
+                "dataset": self.args.dataset_name,
+                "prompt_text": prompt_text,
+                "label": label,
+                "summary": summary,
+                "company_description": company_description,
+            })
+        return examples, records
+
+    def _resolve_company_description(self, ticker: str) -> str:
+        cached = self._load_company_description(ticker)
+        if cached:
+            return cached
+        return f"{ticker} company description is not yet cached."
+
+    def _flatten_training_prompt(self, system_prompt: str, user_prompt: str) -> str:
+        return f"System: {system_prompt.strip()}\nUser: {user_prompt.strip()}\nAssistant:"
+
+    def _format_training_completion(self, label: str) -> str:
+        eos = self.llm.tokenizer.eos_token or ""
+        return f" {label.strip()}{eos}"
+
+    def _dump_args(self):
+        args_path = os.path.join(self.args.results_dir, "args.json")
+        dumpable = {}
+        for key, value in vars(self.args).items():
+            if isinstance(value, datetime):
+                dumpable[key] = value.isoformat()
+                continue
+            try:
+                json.dumps(value)
+                dumpable[key] = value
+            except TypeError:
+                dumpable[key] = str(value)
+        try:
+            with open(args_path, "w", encoding="utf-8") as f:
+                json.dump(dumpable, f, indent=2, ensure_ascii=False)
+            self.logger.info(f"📦 Saved CLI args to {args_path}")
+        except Exception as exc:
+            self.logger.warning(f"Failed to write args.json: {exc}")
+
+    def _build_training_model(self):
+        dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+        model = LlamaForCausalLM.from_pretrained(
+            self.args.base_model,
+            torch_dtype=dtype,
+            low_cpu_mem_usage=True,
+        )
+        model.resize_token_embeddings(len(self.llm.tokenizer))
+        if getattr(self.args, "use_qlora", False):
+            lora_config = LoraConfig(
+                r=getattr(self.args, "lora_r", 16),
+                lora_alpha=getattr(self.args, "lora_alpha", 32),
+                target_modules=["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+                lora_dropout=getattr(self.args, "lora_dropout", 0.1),
+                bias="none",
+                task_type=TaskType.CAUSAL_LM,
+            )
+            model = get_peft_model(model, lora_config)
+        model.config.use_cache = False
+        return model
+
+    def _run_training_loop(self, model, dataset):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model.train()
+        model.to(device)
+        optimizer = torch.optim.AdamW(model.parameters(), lr=self.train_lr)
+        dataloader = TorchDataLoader(dataset, batch_size=self.train_batch_size, shuffle=True)
+        epoch_losses = []
+        grad_accum = self.train_gradient_accumulation_steps
+        for epoch in range(self.train_epochs):
+            epoch_loss = 0.0
+            if len(dataloader) == 0:
+                self.logger.warning("No batches available for training.")
+                break
+            for step, batch in enumerate(dataloader):
+                batch = {k: v.to(device) for k, v in batch.items()}
+                loss = model(**batch).loss
+                loss_scaled = loss / grad_accum
+                loss_scaled.backward()
+                if (step + 1) % grad_accum == 0 or (step + 1) == len(dataloader):
+                    optimizer.step()
+                    optimizer.zero_grad()
+                epoch_loss += loss.item()
+            avg_loss = epoch_loss / len(dataloader) if len(dataloader) else 0.0
+            self.logger.info(f"🧮 Epoch {epoch + 1}/{self.train_epochs} avg loss: {avg_loss:.4f}")
+            epoch_losses.append(avg_loss)
+        return model, epoch_losses
+
+    def _save_training_metrics(self, epoch_losses, total_samples):
+        eval_path = os.path.join(self.args.results_dir, "eval.json")
+        experiment_end = datetime.now()
+        duration = experiment_end - self.args.experiment_start_time
+        result = {
+            "model_name": self.args.base_model,
+            "method_name": self.method_name,
+            "dataset_name": self.args.dataset_name,
+            "total_training_samples": total_samples,
+            "train_epochs": self.train_epochs,
+            "loss_per_epoch": epoch_losses,
+            "avg_loss": sum(epoch_losses) / len(epoch_losses) if epoch_losses else None,
+            "experiment_duration": {
+                "duration": str(duration),
+                "duration_hours": duration.total_seconds() / 3600 if duration else 0.0,
+            },
+        }
+        try:
+            with open(eval_path, "w", encoding="utf-8") as f:
+                json.dump(result, f, indent=4, ensure_ascii=False)
+            self.logger.info(f"📊 Training metrics saved to {eval_path}")
+        except Exception as exc:
+            self.logger.warning(f"Failed to write training eval.json: {exc}")
+
 
     def _create_result_entry(self, ticker, prediction_date, processing_date, ground_truth, company_prompt, 
                            predict_prompt, system_prompt, raw_prediction, parsed_movement, 
@@ -214,7 +380,7 @@ class TDMLLM:
             # 模型信息
             "model_info": {
                 "model_name": self.args.base_model,
-                "method": "TDMLLM",
+                "method": self.method_name,
                 "dataset": self.args.dataset_name
             },
             
@@ -253,113 +419,24 @@ class TDMLLM:
         
         return result_entry
 
-    def _save_test_results(self, test_results, results_dir):
-        """
-        保存測試結果到文件，支持多種格式便於比較分析
-        
-        Args:
-            test_results: 測試結果列表
-            results_dir: str, results directory to use
-        """
-        # 確保目錄存在
-        os.makedirs(results_dir, exist_ok=True)
-        
-        # 1. 保存詳細JSON格式（完整信息）
-        json_filepath = os.path.join(results_dir, "detailed.json")
-        with open(json_filepath, 'w', encoding='utf-8') as f:
-            json.dump(test_results, f, ensure_ascii=False, indent=2)
-        
-        # 2. 保存簡化JSON格式（便於比較）
-        simplified_results = self._create_simplified_results(test_results)
-        simplified_json_filepath = os.path.join(results_dir, "simplified.json")
-        with open(simplified_json_filepath, 'w', encoding='utf-8') as f:
-            json.dump(simplified_results, f, ensure_ascii=False, indent=2)
-        
-        # 3. 保存CSV格式（便於Excel分析）
-        csv_filepath = os.path.join(results_dir, "results.csv")
-        self._save_to_csv(test_results, csv_filepath)
-        
-        # 4. 保存比較格式（便於不同方法比較）
-        comparison_filepath = os.path.join(results_dir, "comparison.csv")
-        self._save_comparison_format(test_results, comparison_filepath)
-        
-        self.logger.info(f"✅ Test results saved to:")
-        self.logger.info(f"   Directory: {results_dir}")
-        self.logger.info(f"   Detailed JSON: {json_filepath}")
-        self.logger.info(f"   Simplified JSON: {simplified_json_filepath}")
-        self.logger.info(f"   CSV: {csv_filepath}")
-        self.logger.info(f"   Comparison CSV: {comparison_filepath}")
+    def _load_company_description(self, ticker: str) -> Optional[str]:
+        fpath = self.company_desc_root / f"{ticker}.txt"
+        if fpath.exists():
+            try:
+                return fpath.read_text(encoding="utf-8")
+            except Exception:
+                return None
+        return None
 
-    def _create_simplified_results(self, test_results):
-        """
-        創建簡化的結果格式，便於快速比較
-        """
-        simplified = []
-        for result in test_results:
-            simplified.append({
-                "ticker": result["ticker"],
-                "ground_truth": result["ground_truth"],
-                "predicted": result["prediction"]["parsed_movement"],
-                "is_correct": result["evaluation"]["is_correct"],
-                "raw_prediction": result["prediction"]["raw_text"][:200] + "..." if len(result["prediction"]["raw_text"]) > 200 else result["prediction"]["raw_text"],
-                "summary": result["input_data"]["summary"][:100] + "..." if len(result["input_data"]["summary"]) > 100 else result["input_data"]["summary"]
-            })
-        return simplified
-
-    def _save_to_csv(self, test_results, filepath):
-        """
-        保存為CSV格式
-        """
-        import pandas as pd
-        csv_data = []
-        for result in test_results:
-            csv_data.append({
-                "ticker": result["ticker"],
-                "prediction_date": result["prediction_date"],  # 預測目標日期
-                "processing_date": result["processing_date"],  # 模型處理日期
-                "ground_truth": result["ground_truth"],
-                "predicted": result["prediction"]["parsed_movement"],
-                "is_correct": result["evaluation"]["is_correct"],
-                "raw_prediction": result["prediction"]["raw_text"],
-                "summary": result["input_data"]["summary"],
-                "company_description": result["input_data"]["company_description"],
-                "error": result["evaluation"]["error"] if result["evaluation"]["error"] else ""
-            })
-        
-        df = pd.DataFrame(csv_data)
-        df.to_csv(filepath, index=False, encoding='utf-8')
-
-    def _save_comparison_format(self, test_results, filepath):
-        """
-        保存為便於比較的格式，適合不同baseline方法比較
-        """
-        import pandas as pd
-        comparison_data = []
-        for result in test_results:
-            comparison_data.append({
-                "sample_id": result["sample_id"],
-                "ticker": result["ticker"],
-                "prediction_date": result["prediction_date"],  # 預測目標日期
-                "ground_truth": result["ground_truth"],
-                "method": result["model_info"]["method"],
-                "model": result["model_info"]["model_name"],
-                "predicted": result["prediction"]["parsed_movement"],
-                "is_correct": result["evaluation"]["is_correct"],
-                "raw_prediction": result["prediction"]["raw_text"],
-                "summary": result["input_data"]["summary"]
-            })
-        
-        df = pd.DataFrame(comparison_data)
-        df.to_csv(filepath, index=False, encoding='utf-8')
+    def _save_company_description(self, ticker: str, desc: str) -> None:
+        fpath = self.company_desc_root / f"{ticker}.txt"
+        try:
+            fpath.write_text(desc or "", encoding="utf-8")
+        except Exception:
+            self.logger.warning(f"Failed to cache company description for {ticker}")
 
     def _extract_stock_return(self, text):
-        text = text.lower().strip()
-        text = re.sub(r"\*\*", "", text)
-
-        match = re.search(r"stock\s*return\s*:\s*[-+]?\d+(?:\.\d+)?\s*%?\s*\(\s*(up|down)\s*\)", text)
-        if match:
-            return "Positive" if match.group(1)  == "up" else "Negative" # 只回傳 up 或 down
-        return "Unknown"
+        return extract_stock_direction(text)
 
     def _build_relative_company_prompt(self, ticker) -> str:
         return self.company_description_prompt.format(ticker=ticker)

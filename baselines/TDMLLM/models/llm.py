@@ -1,19 +1,30 @@
 import time
 import torch
 from transformers import (
-    LlamaForCausalLM, 
+    LlamaForCausalLM,
     AutoTokenizer,
     pipeline,
-    BitsAndBytesConfig
+    BitsAndBytesConfig,
 )
 from peft import LoraConfig, get_peft_model, TaskType
 from tqdm import tqdm
+
+from baselines.FinGPT.model import FinGPTAdapter, FinGPTConfig, GenerationResult
 
 
 class LLaMALLM:
     def __init__(self, args, logger):
         self.args = args
         self.logger = logger
+        self.max_new_tokens = getattr(args, "max_new_tokens_predict", 256)
+        self.do_sample = getattr(args, "do_sample", False)
+        self.num_beams = getattr(args, "num_beams", 1)
+
+        try:
+            torch.backends.cuda.matmul.allow_tf32 = True
+            torch.backends.cudnn.allow_tf32 = True
+        except Exception:
+            pass
 
         # QLoRA Configuration
         if getattr(args, 'use_qlora', True):
@@ -105,22 +116,32 @@ class LLaMALLM:
         temperature = getattr(args, 'temperature', 0.7)
         top_p = getattr(args, 'top_p', 0.9)
         
-        self.text_gen_pipeline = pipeline(
-            task="text-generation",
-            batch_size=args.batch_size,
-            model=self.model,
-            tokenizer=self.tokenizer,
-            max_new_tokens=1024,
-            return_full_text=False,
-            do_sample=True,
-            temperature=temperature,
-            top_p=top_p,
-        )
+        generation_kwargs = {
+            "task": "text-generation",
+            "batch_size": args.batch_size,
+            "model": self.model,
+            "tokenizer": self.tokenizer,
+            "max_new_tokens": self.max_new_tokens,
+            "return_full_text": False,
+        }
+        if self.do_sample:
+            generation_kwargs.update({
+                "do_sample": True,
+                "temperature": temperature,
+                "top_p": top_p,
+            })
+        else:
+            generation_kwargs.update({
+                "do_sample": False,
+                "num_beams": self.num_beams,
+            })
+
+        self.text_gen_pipeline = pipeline(**generation_kwargs)
 
     def create_chat_format_data(self, system_prompt, user_prompt):
         return [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
 
-    def __call__(self, system_prompt, user_prompt):
+    def __call__(self, system_prompt, user_prompt, *, max_new_tokens=None):
         chat_format_data = self.create_chat_format_data(system_prompt, user_prompt)
 
         prompt = self.tokenizer.apply_chat_template(
@@ -133,7 +154,10 @@ class LLaMALLM:
         start_time = time.time()
         try:
             with torch.no_grad():
-                response = self.text_gen_pipeline(prompt)[0]['generated_text']
+                response = self.text_gen_pipeline(
+                    prompt,
+                    max_new_tokens=max_new_tokens or self.max_new_tokens,
+                )[0]['generated_text']
         except Exception as e:
             self.logger.exception("🔥 Inference failed!")
             return "Inference Error"
@@ -142,7 +166,7 @@ class LLaMALLM:
         self.logger.info(f"⏱️ Inference time: {end_time - start_time:.2f} seconds\n")
         return response
 
-    def batch_inference(self, system_prompts, user_prompts):
+    def batch_inference(self, system_prompts, user_prompts, *, max_new_tokens=None):
         """
         批次推論：system_prompts, user_prompts 為 list of str，回傳 list of generated_text
         """
@@ -189,7 +213,10 @@ class LLaMALLM:
                     end = min((batch_idx + 1) * batch_size, len(valid_prompts))
                     batch_prompts = valid_prompts[start:end]
                     batch_indices = prompt_indices[start:end]
-                    outputs = self.text_gen_pipeline(batch_prompts)
+                    outputs = self.text_gen_pipeline(
+                        batch_prompts,
+                        max_new_tokens=max_new_tokens or self.max_new_tokens,
+                    )
                     for idx, out in zip(batch_indices, outputs):
                         results[idx] = out[0]['generated_text']
         except Exception as e:
@@ -200,3 +227,58 @@ class LLaMALLM:
             f"⏱️ Batch inference time: {end_time - start_time:.2f} seconds for {len(valid_prompts)} valid samples\n"
         )
         return results
+
+
+class FinGPTLLM:
+    """Adapter that lets TDMLLM pipeline reuse the FinGPT loader + generator."""
+
+    def __init__(self, args, logger):
+        self.args = args
+        self.logger = logger
+        max_tokens = getattr(args, "max_new_tokens_predict", 256)
+        adapter_base_model = "meta-llama/Meta-Llama-3-8B"
+        requested = getattr(args, "base_model", None)
+        if requested and requested != adapter_base_model:
+            logger.warning(
+                f"[FinGPTLLM] FinGPT adapters are trained on {adapter_base_model}; overriding requested "
+                f"base_model {requested}."
+            )
+        self.config = FinGPTConfig(
+            base_model=adapter_base_model,
+            fingpt_lora=getattr(args, "fingpt_lora", None),
+            max_new_tokens=max_tokens,
+            temperature=getattr(args, "temperature", 0.0),
+            top_p=getattr(args, "top_p", 0.9),
+            do_sample=getattr(args, "do_sample", False),
+            device=getattr(args, "device", None),
+            device_map=getattr(args, "device_map", None),
+            torch_dtype=getattr(args, "torch_dtype", None),
+            load_in_4bit=getattr(args, "load_in_4bit", False),
+            bnb_4bit_compute_dtype=getattr(args, "bnb_4bit_compute_dtype", "float16"),
+            bnb_4bit_quant_type=getattr(args, "bnb_4bit_quant_type", "nf4"),
+            bnb_4bit_use_double_quant=getattr(args, "bnb_4bit_use_double_quant", True),
+        )
+        self.adapter = FinGPTAdapter(self.config, logger=logger)
+
+    def _build_generation_kwargs(self, max_new_tokens):
+        kwargs = {}
+        if max_new_tokens is not None:
+            kwargs["max_new_tokens"] = max_new_tokens
+        return kwargs or None
+
+    def __call__(self, system_prompt, user_prompt, *, max_new_tokens=None):
+        result: GenerationResult = self.adapter.generate(
+            system_prompt,
+            user_prompt,
+            generation_kwargs=self._build_generation_kwargs(max_new_tokens),
+        )
+        return result.text
+
+    def batch_inference(self, system_prompts, user_prompts, *, max_new_tokens=None):
+        assert len(system_prompts) == len(user_prompts), "system_prompts 和 user_prompts 長度需一致"
+        prompts = list(zip(system_prompts, user_prompts))
+        results = self.adapter.batch_generate(
+            prompts,
+            generation_kwargs=self._build_generation_kwargs(max_new_tokens),
+        )
+        return [res.text for res in results]
