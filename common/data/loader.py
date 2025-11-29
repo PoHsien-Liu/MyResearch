@@ -299,8 +299,6 @@ def _load_tweets(ticker, date, tweet_dir, logger=None):
         return []
     path = os.path.join(tweet_dir, ticker, date)
     if not os.path.exists(path):
-        if logger:
-            logger.warning(f"[DataLoader] tweet file missing: {path}")
         return []
     texts = []
     with open(path, "r", encoding="utf-8") as f:
@@ -321,8 +319,6 @@ def _load_tweets(ticker, date, tweet_dir, logger=None):
                     "text": text,
                     "meta": {},
                 })
-    if not texts and logger:
-        logger.warning(f"[DataLoader] no tweets for {ticker} on {date}")
     return texts
 
 
@@ -331,8 +327,6 @@ def _load_cmin_news(ticker, date, news_csv_dir, logger=None):
         return []
     path = os.path.join(news_csv_dir, f"{ticker}.csv")
     if not os.path.exists(path):
-        if logger:
-            logger.warning(f"[DataLoader] news file missing: {path}")
         return []
     df = pd.read_csv(
         path,
@@ -354,9 +348,10 @@ def _load_cmin_news(ticker, date, news_csv_dir, logger=None):
             "source": "news",
             "text": text,
             "meta": {},
-        })
+    })
     if not texts and logger:
-        logger.warning(f"[DataLoader] no news for {ticker} on {date}")
+        # Silently skip missing news for the date to reduce log noise.
+        return texts
     return texts
 
 

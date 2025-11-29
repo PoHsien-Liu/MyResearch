@@ -66,17 +66,28 @@ def build_prediction_prompts(
         "You are a cautious equity analyst. Use ONLY the provided price trend and news; do not add outside knowledge. "
         "If news is missing or weak, state that explicitly."
     )
-    guidance = (
-        "- Summarize the 5-day price trend (up/down/flat) and its implication.\n"
-        "- Ground every claim on the evidence above; cite IDs like (1), (3). If no usable news, say so and rely on price trend.\n"
-        "- If using related-firm news, explain briefly how it impacts the target (e.g., supply chain/sector sentiment/peers).\n"
-        "- Keep the JSON concise; no markdown/code fences."
-    )
+    guidance_lines = [
+        "- Summarize the 5-day price trend (up/down/flat) and its implication.",
+        "- Ground every claim on the evidence above; cite IDs like (1), (3). If no usable news, say so and rely on price trend.",
+    ]
+    if include_related:
+        guidance_lines.append(
+            "- If using related-firm news, leverage the provided relation (e.g., supplier/competitor/partner) to explain how it impacts the target; cite the event IDs."
+        )
+    guidance_lines.append("- Keep the JSON concise; no markdown/code fences.")
+    guidance = "\n".join(guidance_lines)
+    events_hint = ""
+    if include_related:
+        events_hint = (
+            "The [EVENTS] section is grouped into target firm news and related firm news (one block per related company with its relation label). "
+            "Use the IDs exactly as shown when citing."
+        )
     user_text = (
         f"Target stock: {ticker}\n"
         f"Prediction date (D0): {target_date}\n\n"
         f"{price_context}\n\n"
-        f"{events_text}\n\n"
+        f"{events_text}\n"
+        f"{events_hint}\n\n"
         "[TASK]\n"
         "Predict next-day movement (UP or DOWN) for the target stock (vs D-1 close) and explain with citations.\n"
         "Follow this guidance:\n"

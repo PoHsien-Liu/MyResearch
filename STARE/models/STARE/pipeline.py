@@ -10,10 +10,11 @@ from typing import Dict, List, Optional, Tuple
 
 import json
 from common.data.loader import get_record, list_trading_days
+from common.io.results import safe_name
 
 from STARE.configs.dataset import DATASET_REGISTRY
 from STARE.llm_backend.inference import PromptLike, run_inference_batch, clear_llm_cache
-from STARE.utils.paths import dataset_paths, ensure_dir, get_outputs_dir
+from STARE.utils.paths import dataset_paths, ensure_dir, get_outputs_dir, project_root
 from STARE.utils.price import build_price_context
 from STARE.models.STARE.retriever import StareRetriever, RetrievedDoc
 from STARE.utils.prompts import (
@@ -45,6 +46,7 @@ class SelectedSample:
     ret_value: float
     sample_index: int
     mode: str
+    sft_split: Optional[str] = None
 
 
 @dataclass
@@ -78,6 +80,7 @@ class BaseSampleResult:
     factors: Optional[FactorResult] = None
     queries: Optional[QueryResult] = None
     retrieved: Optional[List[RetrievedDoc]] = None
+    prediction_prompts: Optional[Dict[str, str]] = None
     # TODO: add queries, retrieved_events, sft_sample, training_outputs as we extend steps.
 
 
@@ -103,6 +106,11 @@ def _pick_sample(
     ticker: Optional[str],
     target_date: Optional[str],
     sample_index: int,
+    train_ratio: float = 0.8,
+    split_root: Optional[Path] = None,
+    label_strategy: str = "legacy",
+    neg_threshold: float = -0.005,
+    pos_threshold: float = 0.0055,
 ) -> Dict[str, str]:
     """Pick one (ticker, date, label) sample using common.data.loader.list_trading_days."""
     mode = mode.lower()
@@ -117,6 +125,11 @@ def _pick_sample(
         price_dir=str(price_dir),
         mode=mode,
         seq_len=seq_len,
+        train_ratio=train_ratio,
+        split_root=str(split_root) if split_root else None,
+        label_strategy=label_strategy,
+        neg_threshold=neg_threshold,
+        pos_threshold=pos_threshold,
     )
     if not samples:
         raise RuntimeError(f"No trading day samples found for dataset={dataset_name} mode={mode}")
@@ -139,6 +152,127 @@ def _last_k_returns(context_returns: List[Dict], k: int) -> Tuple[List[str], Lis
     dates = [r["date"] for r in tail]
     returns = [float(r["ret"]) * 100 for r in tail]  # convert to percentage
     return dates, returns
+
+
+# -----------------------------------------------------------------------------
+# Split helpers (SFT split map: train/val/test)
+# -----------------------------------------------------------------------------
+
+
+def _format_ratio(train_ratio: float) -> str:
+    return f"{train_ratio:.2f}".rstrip("0").rstrip(".")
+
+
+def _pct_tag(value: float) -> str:
+    pct = value * 100
+    return f"{pct:+.2f}".rstrip("0").rstrip(".") + "pct"
+
+
+# Cache retrievers so we do not reload encoder/index for every sample.
+_RETRIEVER_CACHE: Dict[tuple[str, str], StareRetriever] = {}
+
+
+def _get_retriever(dataset_name: str, embed_model: Optional[str], top_k: int) -> StareRetriever:
+    """Return a cached retriever instance for (dataset, embed_model)."""
+    key = (dataset_name.upper(), embed_model or "default")
+    if key not in _RETRIEVER_CACHE:
+        _RETRIEVER_CACHE[key] = StareRetriever(
+            dataset_name=dataset_name,
+            embed_model=embed_model or "default",
+            top_k=top_k,
+        )
+    retriever = _RETRIEVER_CACHE[key]
+    retriever.top_k = top_k
+    return retriever
+
+
+def _strategy_dir(label_strategy: str, neg_threshold: float, pos_threshold: float) -> str:
+    strategy = (label_strategy or "legacy").lower()
+    if strategy == "legacy":
+        return "legacy"
+    return str(Path("dual") / f"neg{_pct_tag(neg_threshold)}_pos{_pct_tag(pos_threshold)}")
+
+
+def _sft_split_map_path(
+    *,
+    dataset_name: str,
+    train_ratio: float,
+    label_strategy: str,
+    neg_threshold: float,
+    pos_threshold: float,
+    split_root: Optional[Path] = None,
+) -> Path:
+    # Default to repo-level splits/ (sibling of datasets/), not STARE/splits
+    root = Path(split_root) if split_root else project_root() / "splits"
+    dataset_safe = safe_name(dataset_name)
+    ratio_dir = f"ratio-{_format_ratio(train_ratio)}"
+    strategy = _strategy_dir(label_strategy, neg_threshold, pos_threshold)
+    return root / dataset_safe / ratio_dir / strategy / "sft_split_map.json"
+
+
+def _load_sft_split_map(
+    *,
+    dataset_name: str,
+    train_ratio: float,
+    label_strategy: str,
+    neg_threshold: float,
+    pos_threshold: float,
+    split_root: Optional[Path] = None,
+) -> Optional[Dict[str, Dict[str, List[str]]]]:
+    path = _sft_split_map_path(
+        dataset_name=dataset_name,
+        train_ratio=train_ratio,
+        label_strategy=label_strategy,
+        neg_threshold=neg_threshold,
+        pos_threshold=pos_threshold,
+        split_root=split_root,
+    )
+    if not path.exists():
+        LOGGER.warning("SFT split map not found at %s", path)
+        return None
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data.get("splits", {})
+    except Exception as exc:  # pragma: no cover - defensive
+        LOGGER.warning("Failed to load SFT split map from %s: %s", path, exc)
+        return None
+
+
+def _determine_sft_split(
+    *,
+    ticker: str,
+    target_date: str,
+    dataset_name: str,
+    train_ratio: float,
+    label_strategy: str,
+    neg_threshold: float,
+    pos_threshold: float,
+    split_root: Optional[Path],
+    mode: str,
+) -> str:
+    splits = _load_sft_split_map(
+        dataset_name=dataset_name,
+        train_ratio=train_ratio,
+        label_strategy=label_strategy,
+        neg_threshold=neg_threshold,
+        pos_threshold=pos_threshold,
+        split_root=split_root,
+    )
+    ticker_up = ticker.upper()
+    if splits:
+        if target_date in set(splits.get("sft_train", {}).get(ticker_up, [])):
+            return "sft_train"
+        if target_date in set(splits.get("sft_val", {}).get(ticker_up, [])):
+            return "sft_val"
+        if target_date in set(splits.get("sft_test", {}).get(ticker_up, [])):
+            return "sft_test"
+    # fallback: align with base mode
+    if mode.lower() == "train":
+        return "sft_train"
+    if mode.lower() == "test":
+        return "sft_test"
+    return "unknown"
 
 
 # -----------------------------------------------------------------------------
@@ -340,7 +474,7 @@ def retrieve_events(
     top_k: int,
     date_field: str = "date",
 ) -> List[RetrievedDoc]:
-    retriever = StareRetriever(dataset_name=dataset_name, embed_model=embed_model or "default", top_k=top_k)
+    retriever = _get_retriever(dataset_name=dataset_name, embed_model=embed_model, top_k=top_k)
     combined: Dict[str, RetrievedDoc] = {}
     for q in queries:
         docs = retriever.query(
@@ -387,21 +521,29 @@ def _model_slug(name: Optional[str]) -> str:
 def _build_events_block(retrieved: List[RetrievedDoc], target_ticker: str, include_related: bool) -> Tuple[str, List[Dict]]:
     target_ticker = target_ticker.upper()
     target_events = []
-    related_events: Dict[str, List[Dict]] = {}
+    related_events: Dict[str, Dict[str, object]] = {}
     all_events: List[Dict] = []
 
     for idx, doc in enumerate(retrieved, 1):
+        relation = str(doc.metadata.get("relation") or doc.metadata.get("relation_type") or "").strip()
         row = {
             "id": idx,
             "date": doc.metadata.get("date") or doc.metadata.get("created_at") or "",
             "text": doc.text,
             "score": doc.score,
             "source_ticker": str(doc.metadata.get("source_ticker") or "").upper(),
+            "relation": relation,
         }
         if row["source_ticker"] == target_ticker or not include_related:
             target_events.append(row)
         else:
-            related_events.setdefault(row["source_ticker"], []).append(row)
+            bucket = related_events.setdefault(
+                row["source_ticker"],
+                {"relation": relation or "related", "items": []},
+            )
+            if not bucket.get("relation") and relation:
+                bucket["relation"] = relation
+            bucket["items"].append(row)
         all_events.append(row)
 
     lines: List[str] = []
@@ -416,9 +558,10 @@ def _build_events_block(retrieved: List[RetrievedDoc], target_ticker: str, inclu
     if include_related:
         if related_events:
             lines.append("Related firm news:")
-            for firm, items in related_events.items():
-                lines.append(f"- Firm: {firm}")
-                for ev in items:
+            for firm, bundle in related_events.items():
+                relation = bundle.get("relation") or "related"
+                lines.append(f"- Firm: {firm} (relation: {relation})")
+                for ev in bundle.get("items", []):
                     lines.append(f"  ({ev['id']}) [{ev['date']}] {ev['text']}")
         else:
             lines.append("Related firm news: None.")
@@ -436,17 +579,24 @@ def _write_sft_sample(
     query_model: Optional[str],
     experiment_name: Optional[str],
     prompt_variant: str,
+    assistant_payload: Optional[Dict] = None,
+    sft_split: str = "sft_train",
 ) -> Path:
     model_slug = _model_slug(query_model)
     exp = experiment_name or str(int(time.time()))
     out_dir = ensure_dir(outputs_dir / "results" / result.dataset_name / "STARE" / model_slug / exp)
-    out_path = out_dir / "sft_samples.jsonl"
+    filename = "sft_samples.jsonl"
+    split_suffix = sft_split or ""
+    if split_suffix:
+        filename = f"sft_samples_{split_suffix}.jsonl"
+    out_path = out_dir / filename
 
-    assistant_payload = {
-        "prediction": result.selected.label,
-        "reason": "",
-        "used_event_ids": [],
-    }
+    if assistant_payload is None:
+        assistant_payload = {
+            "prediction": result.selected.label,
+            "reason": "",
+            "used_event_ids": [],
+        }
     record = {
         "messages": [
             {"role": "system", "content": system_prompt},
@@ -460,6 +610,7 @@ def _write_sft_sample(
             "prompt_variant": prompt_variant,
             "price_context": result.price.context_text,
             "events": all_events,
+            "sft_split": sft_split,
         },
     }
     with out_path.open("a", encoding="utf-8") as f:
@@ -476,11 +627,13 @@ def run_base_sample(
     dataset_name: str,
     mode: str = "train",
     seq_len: int = 5,
+    train_ratio: float = 0.8,
     ticker: Optional[str] = None,
     target_date: Optional[str] = None,
     sample_index: int = 0,
     run_until: str = "price_context",
     price_dir_override: Optional[Path] = None,
+    split_root: Optional[Path] = None,
     factor_model: Optional[str] = None,
     factor_backend: Optional[str] = None,
     query_backend: Optional[str] = None,
@@ -519,6 +672,11 @@ def run_base_sample(
         ticker=ticker,
         target_date=target_date,
         sample_index=sample_index,
+        train_ratio=train_ratio,
+        split_root=split_root,
+        label_strategy=label_strategy,
+        neg_threshold=neg_threshold,
+        pos_threshold=pos_threshold,
     )
     ticker_sel = sample["ticker"]
     date_sel = sample["date"]
@@ -544,6 +702,17 @@ def run_base_sample(
     )
 
     price_ctx = PriceContext(dates=dates, returns=returns, context_text=price_context_text)
+    sft_split = _determine_sft_split(
+        ticker=ticker_sel,
+        target_date=date_sel,
+        dataset_name=dataset_key,
+        train_ratio=train_ratio,
+        label_strategy=label_strategy,
+        neg_threshold=neg_threshold,
+        pos_threshold=pos_threshold,
+        split_root=split_root,
+        mode=mode,
+    )
     selected = SelectedSample(
         ticker=ticker_sel,
         target_date=date_sel,
@@ -551,6 +720,7 @@ def run_base_sample(
         ret_value=record["price"]["ret"],
         sample_index=sample_index,
         mode=mode,
+        sft_split=sft_split,
     )
     result = BaseSampleResult(
         dataset_name=dataset_key,
@@ -652,6 +822,11 @@ def run_base_sample(
             events_text=events_text,
             include_related=include_related,
         )
+        assistant_payload = {
+            "prediction": result.selected.label,
+            "reason": "",
+            "used_event_ids": [],
+        }
         out_path = _write_sft_sample(
             result=result,
             system_prompt=system_prompt,
@@ -661,7 +836,16 @@ def run_base_sample(
             query_model=query_model or factor_model,
             experiment_name=experiment_name or None,
             prompt_variant=prompt_variant,
+            assistant_payload=assistant_payload,
+            sft_split=sft_split,
         )
+        result.prediction_prompts = {
+            "system_prompt": system_prompt,
+            "user_prompt": user_prompt,
+            "assistant": json.dumps(assistant_payload),
+            "sft_path": str(out_path),
+            "sft_split": sft_split,
+        }
         LOGGER.info("Saved SFT sample to %s", out_path)
         return result
 
@@ -680,6 +864,8 @@ def run_train(args) -> None:
     dataset_name = args.dataset_name
     run_until = getattr(args, "run_until", "price_context")
     seq_len = getattr(args, "seq_len", 5)
+    train_ratio = float(getattr(args, "train_ratio", 0.8))
+    only_ticker = getattr(args, "only_ticker", None)
     test_only = bool(getattr(args, "test_sample", False))
     sample_idx = int(getattr(args, "sample_index", 0))
     force_regen_factors = bool(getattr(args, "force_regen_factors", False))
@@ -696,6 +882,7 @@ def run_train(args) -> None:
     pos_threshold = float(getattr(args, "pos_threshold", 0.0055))
     prompt_variant = getattr(args, "prompt_variant", "target_only")
     experiment_name = getattr(args, "experiment_name", None)
+    split_root = getattr(args, "split_root", None)
 
     price_dir = _resolve_price_dir(dataset_name.upper())
     samples = list_trading_days(
@@ -703,12 +890,22 @@ def run_train(args) -> None:
         price_dir=str(price_dir),
         mode="train",
         seq_len=seq_len,
+        train_ratio=train_ratio,
+        split_root=str(split_root) if split_root else None,
         label_strategy=label_strategy,
         neg_threshold=neg_threshold,
         pos_threshold=pos_threshold,
     )
     if not samples:
         raise RuntimeError(f"No training samples found for dataset={dataset_name}")
+
+    if only_ticker:
+        only_ticker_up = only_ticker.upper()
+        filtered = [s for s in samples if s["ticker"].upper() == only_ticker_up]
+        if not filtered:
+            raise RuntimeError(f"No samples found for ticker={only_ticker} in dataset={dataset_name}")
+        samples = filtered
+        LOGGER.info("Filtering to ticker=%s: %d samples", only_ticker_up, len(samples))
 
     if test_only:
         if sample_idx < 0 or sample_idx >= len(samples):
@@ -731,6 +928,7 @@ def run_train(args) -> None:
                 dataset_name=dataset_name,
                 mode="train",
                 seq_len=seq_len,
+                train_ratio=train_ratio,
                 ticker=sample["ticker"],
                 target_date=sample["date"],
                 sample_index=idx,
@@ -749,6 +947,7 @@ def run_train(args) -> None:
                 pos_threshold=pos_threshold,
                 prompt_variant=prompt_variant,
                 experiment_name=experiment_name,
+                split_root=Path(split_root) if split_root else None,
             )
             if test_only:
                 print("=== Test Sample Output ===")
@@ -786,6 +985,15 @@ def run_train(args) -> None:
                             date = doc.metadata.get("date") or doc.metadata.get("published_at")
                             print(f"({i}) [{date}] score={doc.score:.4f} {doc.text[:200]}")
                 if run_until == "prediction":
+                    if res.prediction_prompts:
+                        print("---- Prediction Prompt (system) ----")
+                        print(res.prediction_prompts.get("system_prompt", ""))
+                        print("---- Prediction Prompt (user) ----")
+                        print(res.prediction_prompts.get("user_prompt", ""))
+                        print("---- Assistant JSON target ----")
+                        print(res.prediction_prompts.get("assistant", ""))
+                        print(f"SFT split: {res.prediction_prompts.get('sft_split', '')}")
+                        print(f"SFT sample path: {res.prediction_prompts.get('sft_path', '')}")
                     print("SFT sample written (prediction + optional explanation format).")
         except Exception as exc:
             if test_only:

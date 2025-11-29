@@ -60,7 +60,7 @@
 
 ## 1. 中間資料格式（raw → SFT）
 
-請建立一個 **中間資料格式**，例如 JSONL 或 parquet，每一列代表一個樣本 `(ticker, target_date)`，至少包含：
+請建立一個 **中間資料格式**，例如 JSON，每一列代表一個樣本 `(ticker, target_date)`，至少包含：
 
 - `ticker`：股票代號（如 `"AAPL"`）
 - `target_date`：預測日（例如 `"2014-01-15"`）

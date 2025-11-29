@@ -1,0 +1,12 @@
+backends:
+  awq_vllm:
+    default_model: "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4"
+    quantization: "awq"
+    tensor_parallel_size: 4
+    max_model_len: 8192
+    max_tokens: 512
+    temperature: 0.0
+    top_p: 1.0
+    gpu_memory_utilization: 0.8
+    dtype: null
+    enforce_eager: true

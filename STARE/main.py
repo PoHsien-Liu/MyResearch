@@ -17,6 +17,7 @@ from STARE.eval.runner import bind_eval_subparser, run_eval
 from STARE.index.build_index import run_build_index
 from STARE.index.embed_texts import run_embed
 from STARE.models.STARE.pipeline import run_train
+from STARE.train.sft_finetune import bind_sft_finetune_args, run_sft_finetune_task
 
 
 LOGGER = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ def _register_tasks() -> Dict[str, Callable[[argparse.Namespace], None]]:
         "eval": run_eval,
         "explanation_eval": run_explanation_eval_task,
         "train": run_train,
+        "sft_finetune": run_sft_finetune_task,
     }
 
 
@@ -63,6 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
             "eval",
             "explanation_eval",
             "train",
+            "sft_finetune",
         ],
         help="Task to execute",
     )
@@ -72,7 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--query_model", default=None, help="Override model for query generation (default: base_model or config)")
     parser.add_argument("--factor_backend", default=None, help="Backend name for factor generation (default: llama)")
     parser.add_argument("--query_backend", default=None, help="Backend name for query generation (default: factor backend or llama)")
-    parser.add_argument("--embed_model", default=None, help="Embedding model name for indexing tasks")
+    parser.add_argument("--embed_model", default="FinLang/finance-embeddings-investopedia", help="Embedding model name for indexing tasks")
     parser.add_argument("--experiment_name", default=None, help="Optional experiment identifier")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--seq_len", type=int, default=5, help="Sequence length for baselines requiring it")
@@ -85,6 +88,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--label_strategy", default="dual_threshold", choices=["legacy", "dual_threshold"], help="Labeling strategy for returns (default: dual_threshold)")
     parser.add_argument("--neg_threshold", type=float, default=-0.005, help="Negative threshold for dual_threshold labeling (default: -0.5%)")
     parser.add_argument("--pos_threshold", type=float, default=0.0055, help="Positive threshold for dual_threshold labeling (default: +0.55%)")
+    parser.add_argument("--train_ratio", type=float, default=0.8, help="Train split ratio for base splits (default: 0.8)")
+    parser.add_argument("--split_root", default=None, help="Optional override for split directory")
+    parser.add_argument("--only_ticker", default=None, help="If set, only run samples for this ticker (e.g., AAPL)")
     # Training-specific controls
     parser.add_argument("--test_sample", action="store_true", help="If set, only run a single sample for quick validation")
     parser.add_argument("--sample_index", type=int, default=0, help="Index of sample to run when --test_sample is set")
@@ -104,6 +110,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     bind_eval_subparser(parser)
     bind_explanation_eval_args(parser)
+    bind_sft_finetune_args(parser)
     return parser
 
 

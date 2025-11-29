@@ -78,7 +78,7 @@
     - raw_response（可選，預設保留並可截斷）
     - prompts（可選）：{"system": str, "user": str}
     - timing（可選）：{"latency_ms": number}
-  - predictions.csv：扁平欄位版（至少含 sample_id,ticker,prediction_date,y_true,y_pred,model,method,dataset,experiment_name）。
+  - predictions.csv：扁平欄位版（至少含 sample_id,ticker,prediction_date,y_true,y_pred,model,method,dataset,experiment_name），並需額外保存預測使用的 prompt 欄位（system_prompt, user_prompt）。
 - RAG 與資料處理產物（STARE 與共用索引用）
   - indices/{dataset}/{embed_model}/embeddings.npy
  - indices/{dataset}/{embed_model}/metadata.parquet
