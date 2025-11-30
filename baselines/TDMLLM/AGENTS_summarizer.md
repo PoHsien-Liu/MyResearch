@@ -124,7 +124,7 @@ results[(ticker, date)] = summary_str
 
 其中：
 
-dataset_name 來自 args（例如 ACL18 / SEP / CMIN / SAMPLE）。
+dataset_name 來自 args（例如 STOCKNET / SEP / CMIN / SAMPLE）。
 
 safe_model_name：將 base_model 的 / 替換成 __，例如：
 
@@ -132,7 +132,7 @@ meta-llama/Meta-Llama-3-8B-Instruct → meta-llama__Meta-Llama-3-8B-Instruct
 
 檔案內容範例
 {
-  "dataset": "ACL18",
+  "dataset": "STOCKNET",
   "method": "TDMLLM",
   "model": "meta-llama/Meta-Llama-3-8B-Instruct",
   "ticker": "AAPL",

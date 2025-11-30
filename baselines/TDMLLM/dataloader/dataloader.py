@@ -16,7 +16,7 @@ class DataLoader:
         self.seq_len = args.seq_len
         self.summarizer = Summarizer(args, logger)
         self.summary_cache = {}
-        self.dataset_name = args.dataset_name
+        self.dataset_name = args.dataset_name.upper()
         self.summary_min_tweets = getattr(args, "summary_min_tweets", 1)
         self.summary_max_tweets = max(1, getattr(args, "summary_max_tweets", 50))
         self.summary_batch_size = getattr(args, "summary_batch_size", getattr(args, "batch_size", 8))
@@ -27,7 +27,7 @@ class DataLoader:
         self.neg_threshold = getattr(args, "neg_threshold", -0.005)
         self.pos_threshold = getattr(args, "pos_threshold", 0.0055)
         self.neutral_skipped = 0
-        if self.dataset_name == "ACL18":
+        if self.dataset_name == "STOCKNET":
             self.start_date = datetime(2014, 1, 1)
             self.end_date = datetime(2016, 1, 1)
         else:

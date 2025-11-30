@@ -17,7 +17,7 @@ def _repo_root() -> str:
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 DATE_WINDOWS = {
-    "ACL18": ("2014-01-01", "2015-12-31"),
+    "STOCKNET": ("2014-01-01", "2015-12-31"),
     "SEP": ("2020-01-01", "2022-12-31"),
     "CMIN": ("2018-01-01", "2019-12-31"),
 }
@@ -65,7 +65,9 @@ def list_trading_days(
     label_strategy = label_strategy or "legacy"
     label_strategy = label_strategy.lower()
 
-    for ticker, price_path in _iter_price_files(price_dir, dataset_name):
+    dataset_key = dataset_name.upper()
+
+    for ticker, price_path in _iter_price_files(price_dir, dataset_key):
         try:
             df, _ = _load_price_frame(price_path)
         except Exception as exc:
@@ -73,7 +75,7 @@ def list_trading_days(
                 logger.warning(f"[DataLoader] skip {ticker}: {exc}")
             continue
 
-        df = _apply_time_window(df, dataset_name)
+        df = _apply_time_window(df, dataset_key)
         if df.empty:
             continue
 
@@ -87,7 +89,7 @@ def list_trading_days(
         df = _compute_returns(df)
 
         split_dates = get_split_dates(
-            dataset_name=dataset_name,
+            dataset_name=dataset_key,
             ticker=ticker,
             dates=candidate_dates,
             split_name=mode,
@@ -265,8 +267,8 @@ def _load_price_frame(path: str) -> tuple[pd.DataFrame, Dict]:
 
 def _apply_time_window(df: pd.DataFrame, dataset_name: str) -> pd.DataFrame:
     name = dataset_name.upper()
-    if name in {"ACL18", "STOCKNET"}:
-        start, end = DATE_WINDOWS["ACL18"]
+    if name in {"STOCKNET"}:
+        start, end = DATE_WINDOWS["STOCKNET"]
     elif name in {"CMIN", "CMIN-US"}:
         start, end = DATE_WINDOWS["CMIN"]
     else:
@@ -287,7 +289,7 @@ def _compute_returns(df: pd.DataFrame) -> pd.DataFrame:
 
 def _load_texts_for_date(dataset_name, ticker, date, *, tweet_dir=None, news_csv_dir=None, logger=None):
     name = dataset_name.upper()
-    if name in {"ACL18", "STOCKNET", "SEP", "SAMPLE"}:
+    if name in {"STOCKNET", "SEP", "SAMPLE"}:
         return _load_tweets(ticker, date, tweet_dir, logger)
     if name in {"CMIN", "CMIN-US"}:
         return _load_cmin_news(ticker, date, news_csv_dir, logger)

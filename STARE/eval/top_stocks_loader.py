@@ -27,8 +27,6 @@ def load_top1_tickers(
     If scope == "all", returns an empty set to signal no filtering.
     """
     dataset_key = dataset.upper()
-    if dataset_key == "ACL18":
-        dataset_key = "STOCKNET"
     if dataset_key == "CMIN":
         dataset_key = "CMIN-US"
 

@@ -41,7 +41,7 @@ def _setup_logger() -> logging.Logger:
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("LLMFactor baseline (SKGP inference)")
-    parser.add_argument("--dataset_name", type=str, default="SAMPLE", choices=["SAMPLE", "ACL18", "CMIN", "SEP"])
+    parser.add_argument("--dataset_name", type=str, default="SAMPLE", choices=["SAMPLE", "STOCKNET", "CMIN", "SEP"])
     parser.add_argument("--seq_len", type=int, default=5, help="Number of historical trading days to include.")
     parser.add_argument("--max_news_per_day", type=int, default=12, help="Limit of news items per day (<=0 means all).")
     parser.add_argument("--max_samples", type=int, default=-1, help="Optional cap on number of samples (test split).")

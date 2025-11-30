@@ -50,7 +50,7 @@ class RelationConfig:
 DEFAULT_RELATION_CONFIGS: Dict[str, RelationConfig] = {
     "CMIN": RelationConfig(dataset="CMIN", hyperparams=RelationHyperParams(max_neighbors=3)),
     "SEP": RelationConfig(dataset="SEP"),
-    "ACL18": RelationConfig(dataset="ACL18"),
+    "STOCKNET": RelationConfig(dataset="STOCKNET"),
     "SAMPLE": RelationConfig(dataset="SAMPLE"),
 }
 

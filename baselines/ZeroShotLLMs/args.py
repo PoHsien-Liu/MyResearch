@@ -8,7 +8,7 @@ import argparse
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser("Zero-shot LLM baselines (AWQ vLLM + FinGPT LoRA)")
     parser.add_argument("--backend", type=str, default="awq_vllm", choices=["awq_vllm", "fingpt_lora"])
-    parser.add_argument("--dataset_name", type=str, default="SAMPLE", choices=["SAMPLE", "ACL18", "CMIN", "SEP"])
+    parser.add_argument("--dataset_name", type=str, default="SAMPLE", choices=["SAMPLE", "STOCKNET", "CMIN", "SEP"])
     parser.add_argument("--base_model", type=str, default=None, help="HF base model (backend-specific default will apply if omitted)")
     parser.add_argument("--lora_path", type=str, default=None, help="LoRA path (used when backend=fingpt_lora)")
     parser.add_argument("--seq_len", type=int, default=5, help="Number of historical trading days to include.")

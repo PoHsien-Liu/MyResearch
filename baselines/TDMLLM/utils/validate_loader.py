@@ -180,7 +180,7 @@ def validate_get_record_and_texts(
 
 def main():
     parser = argparse.ArgumentParser(description="Validate common/data/loader APIs.")
-    parser.add_argument("--dataset_name", default="SAMPLE", choices=["SAMPLE", "ACL18", "CMIN", "SEP"], help="Dataset to validate")
+    parser.add_argument("--dataset_name", default="SAMPLE", choices=["SAMPLE", "STOCKNET", "CMIN", "SEP"], help="Dataset to validate")
     parser.add_argument("--mode", default="test", choices=["train", "test"], help="Dataset split to inspect")
     parser.add_argument("--seq_len", type=int, default=5)
     parser.add_argument("--limit", type=int, default=4, help="Number of samples to validate")

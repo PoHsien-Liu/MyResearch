@@ -26,7 +26,7 @@
   - utils/：logger、seed、paths 等共用工具。
   - main.py：CLI 入口，任務包含 clean / extract_mentions / embed / build_index / build_index_pipeline / eval。
   - models/STARE/pipeline.py：RAG 推論流程與 LLM 生成（目前待實作）。
-- datasets/：所有方法共用資料集（sample_data、SEP、CMIN、stocknet、ACL18/stocknet）。
+- datasets/：所有方法共用資料集（sample_data、SEP、CMIN、stocknet）。
 - outputs/：所有產物（請加入 .gitignore）
   - results/{dataset}/{method}/{model}/{exp}/
   - indices/{dataset}/{embed_model}/：STARE RAG 索引與中間產物（cleaned*.parquet、cleaned_with_mentions*.parquet、embeddings.npy、metadata.parquet、index.faiss、dropped.parquet）
@@ -48,7 +48,7 @@
   - OUTPUTS_DIR：輸出根路徑，預設 ./outputs。
 - 資料集映射（集中於 STARE/stare/configs/dataset.py）
   - SAMPLE: price=sample_data/sample_price, tweet=sample_data/sample_tweet
-  - ACL18: price=ACL18/stocknet-dataset/price, tweet=ACL18/stocknet-dataset/tweet
+- STOCKNET: price=stocknet/price, tweet=stocknet/tweet
   - CMIN: price=CMIN/CMIN-Dataset/CMIN-US/price, tweet=CMIN/CMIN-Dataset/CMIN-US/news
   - SEP: price=SEP/price, tweet=SEP/tweet
 - 共同規範
@@ -57,7 +57,7 @@
 
 共同 CLI 規範
 - 共同參數（適用 STARE 與各 baseline wrapper）
-  - --dataset_name（SAMPLE/ACL18/CMIN/SEP）
+- --dataset_name（SAMPLE/STOCKNET/CMIN/SEP）
   - --base_model（例如 meta-llama/Meta-Llama-3.1-8B-Instruct、ProsusAI/finbert）
   - --seed、--seq_len、--batch_size
   - --experiment_name（若未指定則使用 timestamp）

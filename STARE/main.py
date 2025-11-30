@@ -69,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
         ],
         help="Task to execute",
     )
-    parser.add_argument("--dataset_name", required=True, help="Dataset identifier (SAMPLE/ACL18/CMIN/SEP)")
+    parser.add_argument("--dataset_name", required=True, help="Dataset identifier (SAMPLE/STOCKNET/CMIN/SEP)")
     parser.add_argument("--base_model", default=None, help="Foundation model name (for eval tasks)")
     parser.add_argument("--factor_model", default=None, help="Override model for factor generation (default: base_model or config)")
     parser.add_argument("--query_model", default=None, help="Override model for query generation (default: base_model or config)")

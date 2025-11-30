@@ -35,10 +35,12 @@ DATASET_REGISTRY: Dict[str, DatasetConfig] = {
         price_rel_path="sample_data/sample_price",
         text_rel_path="sample_data/sample_tweet",
     ),
-    "ACL18": DatasetConfig(
-        name="ACL18",
-        price_rel_path="ACL18/stocknet-dataset/price",
-        text_rel_path="ACL18/stocknet-dataset/tweet",
+    "STOCKNET": DatasetConfig(
+        name="STOCKNET",
+        price_rel_path="stocknet/price",
+        text_rel_path="stocknet/tweet",
+        price_alt_paths=(),
+        text_alt_paths=(),
     ),
     "CMIN": DatasetConfig(
         name="CMIN",

@@ -25,7 +25,7 @@ from common.data.loader import list_trading_days, get_record, load_texts_for_day
 
 def parse_args():
     ap = argparse.ArgumentParser("Single-sample FinGPT generation smoke test")
-    ap.add_argument("--dataset_name", type=str, default="SAMPLE", choices=["SAMPLE", "ACL18", "CMIN", "SEP"])
+    ap.add_argument("--dataset_name", type=str, default="SAMPLE", choices=["SAMPLE", "STOCKNET", "CMIN", "SEP"])
     ap.add_argument("--base_model", type=str, required=True)
     ap.add_argument(
         "--fingpt_lora",

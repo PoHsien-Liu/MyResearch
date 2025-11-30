@@ -57,7 +57,7 @@ def main():
     parser.add_argument("--fingpt_lora", type=str, default=None, help="Optional FinGPT LoRA path when --llm_adapter=fingpt")
     parser.add_argument('--seed', type=int, default=42)
     parser.add_argument('--out', type=str, default='')
-    parser.add_argument("--dataset_name", type=str, default="SAMPLE", choices=["SAMPLE", "ACL18", "CMIN", "SEP"], help="Name of the dataset for saving results (ACL18, CMIN, or SEP)")
+    parser.add_argument("--dataset_name", type=str, default="SAMPLE", choices=["SAMPLE", "STOCKNET", "CMIN", "SEP"], help="Name of the dataset for saving results")
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--seq_len", type=int, default=5)
     parser.add_argument("--base_data_dir", type=str, default=None, help="Override DATASETS_DIR env; defaults to ./datasets")

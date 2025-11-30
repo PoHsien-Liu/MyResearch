@@ -11,7 +11,7 @@ DATASET_PATHS: Dict[str, Dict[str, str]] = {
         "price": "sample_data/sample_price/raw",
         "tweet": "sample_data/sample_tweet/raw",
     },
-    "ACL18": {
+    "STOCKNET": {
         "price": "stocknet/price/raw",
         "tweet": "stocknet/tweet/raw",
     },
@@ -42,11 +42,12 @@ def resolve_dataset_paths(dataset_name: str, base_data_dir: str | None = None) -
         base_data_dir: Optional override of DATASETS_DIR env / ./datasets.
     """
 
-    if dataset_name not in DATASET_PATHS:
+    dataset_key = (dataset_name or "").upper()
+    if dataset_key not in DATASET_PATHS:
         raise KeyError(f"Unknown dataset_name={dataset_name}. Available={list(DATASET_PATHS)}")
 
     base_dir = base_data_dir or os.getenv("DATASETS_DIR", "./datasets")
-    cfg = DATASET_PATHS[dataset_name]
+    cfg = DATASET_PATHS[dataset_key]
 
     price_dir = os.path.join(base_dir, cfg["price"])
     tweet_dir = os.path.join(base_dir, cfg["tweet"])
@@ -57,7 +58,7 @@ def resolve_dataset_paths(dataset_name: str, base_data_dir: str | None = None) -
         raise FileNotFoundError(f"tweet_dir not found: {tweet_dir}")
 
     return DatasetPaths(
-        dataset_name=dataset_name,
+        dataset_name=dataset_key,
         base_data_dir=base_dir,
         price_dir=price_dir,
         tweet_dir=tweet_dir,

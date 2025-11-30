@@ -242,7 +242,7 @@ class EmbeddingModel:
 
 ### 8.1 共同參數
 
-- `--dataset_name`：`SAMPLE`/`ACL18`/`SEP`/`CMIN` 等。
+- `--dataset_name`：`SAMPLE`/`STOCKNET`/`SEP`/`CMIN` 等。
 - `--embed_model`：如 `FinLang/finance-embeddings-investopedia`。
 - `--experiment_name`（可選）：若未指定則用 timestamp。
 - `--min_tokens`：rule-based 清洗的最短 token 數。

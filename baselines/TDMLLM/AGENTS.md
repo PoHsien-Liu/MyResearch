@@ -23,7 +23,7 @@
   - `OUTPUTS_DIR`（預設 `./outputs`）：輸出根目錄。
 - 資料集子路徑（與 STARE 對齊）：
   - `SAMPLE`: price=`sample_data/sample_price`, tweet=`sample_data/sample_tweet`
-  - `ACL18`: price=`ACL18/stocknet-dataset/price`, tweet=`ACL18/stocknet-dataset/tweet`
+  - `STOCKNET`: price=`stocknet/price`, tweet=`stocknet/tweet`
   - `CMIN`: price=`CMIN/CMIN-Dataset/CMIN-US/price`, tweet=`CMIN/CMIN-Dataset/CMIN-US/news`
   - `SEP`: price=`SEP/price`, tweet=`SEP/tweet`
 - 結果輸出根目錄（請勿寫入程式資料夾）：
@@ -37,7 +37,7 @@
 
 CLI 與參數（建議）
 - 共同參數：
-  - `--dataset_name`（SAMPLE/ACL18/CMIN/SEP）
+  - `--dataset_name`（SAMPLE/STOCKNET/CMIN/SEP）
   - `--base_model`（例如 `meta-llama/Meta-Llama-3.1-8B-Instruct`）
   - `--summary_model`（摘要模型；預設同 `--base_model`）
   - `--seed`, `--seq_len`, `--batch_size`, `--experiment_name`

@@ -33,9 +33,8 @@ DATASET_TOP1_CONFIG: Dict[str, Top1Config] = {
             "UPS",   # Industrials
         ],
     ),
-    # StockNet / ACL18: derive per-sector top-1 by tweet volume.
+    # StockNet: derive per-sector top-1 by tweet volume.
     "STOCKNET": Top1Config(mode="by_sector_tweet_volume"),
-    "ACL18": Top1Config(mode="by_sector_tweet_volume"),
     # CMIN-US: top-k tickers by news volume.
     "CMIN-US": Top1Config(mode="overall_top_k_news", k=11),
     "CMIN": Top1Config(mode="overall_top_k_news", k=11),
