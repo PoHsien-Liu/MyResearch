@@ -1,0 +1,35 @@
+models:
+  default:
+    # Default preset (8B AWQ)
+    default_model: "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4"
+    quantization: "awq"
+    tensor_parallel_size: 1
+    max_model_len: 8192
+    max_tokens: 512
+    temperature: 0.0
+    top_p: 1.0
+    gpu_memory_utilization: 0.8
+    dtype: null
+    enforce_eager: true
+  llama3_8b_awq:
+    default_model: "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4"
+    quantization: "awq"
+    tensor_parallel_size: 1
+    max_model_len: 8192
+    max_tokens: 512
+    temperature: 0.0
+    top_p: 1.0
+    gpu_memory_utilization: 0.8
+    dtype: null
+    enforce_eager: true
+  llama3_70b_awq:
+    default_model: "hugging-quants/Meta-Llama-3.1-70B-Instruct-AWQ-INT4"
+    quantization: "awq"
+    tensor_parallel_size: 4
+    max_model_len: 2048
+    max_tokens: 800
+    temperature: 0.0
+    top_p: 1.0
+    gpu_memory_utilization: 0.8
+    dtype: null
+    enforce_eager: true
