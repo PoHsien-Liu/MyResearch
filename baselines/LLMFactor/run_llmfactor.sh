@@ -17,6 +17,7 @@ BATCH_SIZE="1"
 EXPERIMENT_NAME=""
 TOP_RELATED="3"
 TOP_FACTORS="5"
+MAX_NEWS_PER_DAY="5"
 MAX_NEW_TOKENS="512"
 TEMPERATURE="0.0"
 TOP_P="1.0"
@@ -37,6 +38,7 @@ Options:
   --experiment-name NAME Optional experiment tag (auto if empty)
   --top-related N        Top related tickers from cooccurrence (default: 3)
   --top-factors N        Top-k factors in Step2 prompt (default: 5)
+  --max-news-per-day N   Max news items per day (<=0 means no limit, default: 12)
   --max-new-tokens N     Generation max tokens (default: 512)
   --temperature VAL      Generation temperature (default: 0.0)
   --top-p VAL            Generation top_p (default: 1.0)
@@ -57,6 +59,7 @@ while [[ $# -gt 0 ]]; do
     --experiment-name) EXPERIMENT_NAME="$2"; shift 2 ;;
     --top-related) TOP_RELATED="$2"; shift 2 ;;
     --top-factors) TOP_FACTORS="$2"; shift 2 ;;
+    --max-news-per-day) MAX_NEWS_PER_DAY="$2"; shift 2 ;;
     --max-new-tokens) MAX_NEW_TOKENS="$2"; shift 2 ;;
     --temperature) TEMPERATURE="$2"; shift 2 ;;
     --top-p) TOP_P="$2"; shift 2 ;;
@@ -95,6 +98,7 @@ cmd=(
   --experiment_name "$EXPERIMENT_NAME"
   --top_related "$TOP_RELATED"
   --top_factors "$TOP_FACTORS"
+  --max_news_per_day "$MAX_NEWS_PER_DAY"
   --max_new_tokens "$MAX_NEW_TOKENS"
   --temperature "$TEMPERATURE"
   --top_p "$TOP_P"
