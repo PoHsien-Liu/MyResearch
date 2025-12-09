@@ -39,9 +39,15 @@ def build_query_prompt(
     factors_text: str,
 ) -> PromptLike:
     system_text = (
-        "You are a retrieval query generator for a financial news search system.\n"
-        "Generate focused English queries that retrieve news truly affecting short-term price movement.\n"
-        "Respond ONLY with JSON: {\"queries\": [\"<q1>\", \"<q2>\", \"<q3>\"]} without markdown fences."
+        "You generate retrieval queries for a financial news search system.\n"
+        "Output will be parsed by a STRICT JSON parser.\n"
+        "Format: {\"queries\": [\"<q1>\", \"<q2>\", \"<q3>\"]}\n"
+        "Rules:\n"
+        "- Return EXACTLY one JSON object, no extra text.\n"
+        "- Key must be \"queries\" only, value is an array of 3 strings.\n"
+        "- Inside each query string, do NOT use double quotes (\").\n"
+        "- Do NOT use backslashes, backticks, or markdown/code fences.\n"
+        "- Use parentheses or plain text if you need emphasis."
     )
     user_text = (
         f"Ticker: {ticker}\n"
@@ -49,7 +55,8 @@ def build_query_prompt(
         f"Look-back window: from {start_date} to {end_date} (inclusive)\n\n"
         "Typical price drivers:\n"
         f"{factors_text}\n\n"
-        "Please generate 3 focused English search queries in the JSON format described above."
+        "Generate 3 focused English news search queries for this ticker and window.\n"
+        "Follow the JSON format and rules above, and reply with the JSON object only."
     )
     return PromptLike(system=system_text, user=user_text)
 
@@ -62,26 +69,37 @@ def build_prediction_prompts(
     events_text: str,
     include_related: bool,
 ) -> Tuple[str, str]:
+    # system prompt: explain identity + require output format
     system_text = (
-        "You are a cautious equity analyst. Use ONLY the provided price trend and news; do not add outside knowledge. "
-        "If news is missing or weak, state that explicitly."
+        "You are a cautious equity analyst.\n"
+        "Use ONLY the provided price trend and news; do not add outside knowledge.\n"
+        "If news is missing or weak, state that explicitly.\n"
+        "\n"
+        "You must reply with a single valid JSON object only, with exactly two fields:\n"
+        "- \"prediction\": either \"UP\" or \"DOWN\" (for next-day movement vs D-1 close),\n"
+        "- \"reason\": a short explanation supporting the prediction based on the given evidence.\n"
+        "Do not add any other fields. Do not include markdown, code fences, or extra text outside the JSON."
     )
+
     guidance_lines = [
-        "- Summarize the 5-day price trend (up/down/flat) and its implication.",
-        "- Ground every claim on the evidence above; cite IDs like (1), (3). If no usable news, say so and rely on price trend.",
+        "- Summarize the 5-day price trend (up/down) and its implication.",
+        "- Use the evidence above to support the explanation. If no usable news, say so and rely on price trend.",
     ]
     if include_related:
         guidance_lines.append(
-            "- If using related-firm news, leverage the provided relation (e.g., supplier/competitor/partner) to explain how it impacts the target; cite the event IDs."
+            "- If using related-firm news, leverage the provided relation "
+            "(e.g., supplier/competitor/partner) to explain how it impacts the target."
         )
-    guidance_lines.append("- Keep the JSON concise; no markdown/code fences.")
+    guidance_lines.append("- Keep the JSON concise; no markdown or code fences.")
     guidance = "\n".join(guidance_lines)
+
     events_hint = ""
     if include_related:
         events_hint = (
-            "The [EVENTS] section is grouped into target firm news and related firm news (one block per related company with its relation label). "
-            "Use the IDs exactly as shown when citing."
+            "The [EVENTS] section is grouped into target firm news and related firm news "
+            "(one block per related company with its relation label)."
         )
+
     user_text = (
         f"Target stock: {ticker}\n"
         f"Prediction date (D0): {target_date}\n\n"
@@ -89,21 +107,12 @@ def build_prediction_prompts(
         f"{events_text}\n"
         f"{events_hint}\n\n"
         "[TASK]\n"
-        "Predict next-day movement (UP or DOWN) for the target stock (vs D-1 close) and explain with citations.\n"
+        "Predict next-day movement (UP or DOWN) for the target stock (vs D-1 close) and explain.\n"
         "Follow this guidance:\n"
         f"{guidance}\n\n"
-        "[OUTPUT JSON]\n"
-        "{\n"
-        '  "prediction": "UP" or "DOWN",\n'
-        '  "reason": "<short explanation with citations>",\n'
-        '  "used_event_ids": [<list of integers>] // empty if none\n'
-        "}"
+        "Respond with the JSON object only."
     )
-    if not include_related:
-        user_text = user_text.replace(
-            "If using related-firm news, explain briefly how it impacts the target (e.g., supply chain/sector sentiment/peers).\n",
-            "",
-        )
+
     return system_text, user_text
 
 

@@ -20,7 +20,7 @@ As iPhone sale sag, #Apple touts apps and services instead. Read more: https://t
 RT @RogerWCheng: Apple @tim_cook says the services business (App Store, Apple Music, etc) will be the size of a Fortune 500 company next ye…
 RT @kyurieff: Apple stock soars in after-hours on Q3 beat, pops 5%: https://t.co/MYRmtUIE4J via @TheStreet $AAPL
 
-Summary:
+Facts:
 Apple reported Q3 2016 earnings: Revenue of $42.4 billion, beating expectations. They sold 40.4 million iPhones, 9.9 million iPads, and 4.2 million Macs during that quarter.
 Apple's earnings beat expectations, causing the stock to rise by almost 5% in after-hours trading.
 Apple had $231.5 billion in cash reserves, enough to potentially acquire companies like Uber, Tesla, Twitter, Airbnb, Netflix, Snapchat, and SpaceX and still have billions left.
@@ -47,7 +47,7 @@ RT @USATODAYmoney: Ouch! Apple's earnings of $1.90 a share were well below the $
 RT @usatodaytech: Apple reports first quarterly iPhone sales drop since 2007 debut $AAPL https://t.co/aIuozzuhiP
 Apple dividend yield up to 2.3% now. $AAPL
 
-Summary:
+Facts:
 Apple reported its Q2 2016 earnings, missing both profit and revenue estimates.
 Apple's revenue for the quarter was $50.56 billion, falling short of the estimated $52 billion.
 The company's adjusted earnings per share (EPS) was $1.90, lower than the expected $2.00.

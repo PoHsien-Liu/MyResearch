@@ -1,110 +1,147 @@
-import openai
-import os
-from tenacity import (
-    retry,
-    stop_after_attempt, # type: ignore
-    wait_random_exponential, # type: ignore
-)
-# from fastchat.model import get_conversation_template
+from __future__ import annotations
+
+import importlib
+from dataclasses import dataclass
+from typing import Optional
+
 import torch
-from transformers import LlamaForCausalLM, AutoTokenizer, pipeline
-import requests
-import json
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 
-class OllamaLLM:
-    def __init__(self, model_name="mistral:7b"):
-        self.model_name = model_name
-        self.base_url = "http://localhost:11434"
-        
-    def __call__(self, prompt):
-        try:
-            response = requests.post(
-                f"{self.base_url}/api/generate",
-                json={
-                    "model": self.model_name,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.1,
-                        "top_p": 0.9,
-                        "max_tokens": 512
-                    }
-                }
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                return result.get("response", "").strip()
-            else:
-                print(f"Ollama API error: {response.status_code}")
-                return "Error: Unable to generate response"
-                
-        except Exception as e:
-            print(f"Ollama connection error: {e}")
-            return "Error: Connection failed"
 
-class LLaMALLM:
-    def __init__(self):
-        # Load Tokenizer and Model
-        self.base_model = "./llama_local"
-        # self.base_model = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+@dataclass
+class VLLMSamplingConfig:
+    temperature: float = 0.1
+    top_p: float = 0.9
+    max_new_tokens: int = 512
+    repetition_penalty: Optional[float] = None
 
-        self.tokenizer = AutoTokenizer.from_pretrained(self.base_model)
-        # self.tokenizer = AutoTokenizer.from_pretrained(self.base_model)
-        # Set PAD Token
-        PAD_TOKEN = "<|pad|>"
-        self.tokenizer.add_special_tokens({"pad_token": PAD_TOKEN})
-        self.tokenizer.padding_side = "right"
-        
-        self.model = LlamaForCausalLM.from_pretrained(
-            self.base_model,
-            torch_dtype=torch.float16,
-            device_map="auto",
-            # 添加以下參數來避免 P2P 警告
-            max_memory={i: "20GB" for i in range(8)},  # 限制每個 GPU 記憶體使用
-            offload_folder="offload"  # 啟用模型分片
-        )
-
-        self.text_gen_pipeline = pipeline(
-            task="text-generation",
-            batch_size=1,
-            model=self.model,
-            tokenizer=self.tokenizer,
-            max_new_tokens=512,
-            return_full_text=False,
-            pad_token_id=self.tokenizer.pad_token_id,
-            # 添加更好的生成參數
-            do_sample=True,
-            temperature=0.1,
-            top_p=0.9,
-            repetition_penalty=1.1,
-            eos_token_id=self.tokenizer.eos_token_id
-        )
-
-    def create_chat_format_data(self, system_prompt, user_prompt):
-        return [{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}]
-
-    def __call__(self, user_prompt):
-        chat_format_data = self.create_chat_format_data("", user_prompt)
-
-        prompt = self.tokenizer.apply_chat_template(
-            chat_format_data, tokenize=False, add_generation_prompt=True
-        )
-
-        response = self.text_gen_pipeline(prompt)[0]['generated_text']
-
-        return response
 
 class OpenAILLM:
-    def __init__(self):
-        self.model = "gpt-3.5-turbo-16k"
+    """Legacy OpenAI client retained for backward compatibility."""
+
+    def __init__(self, model: str = "gpt-3.5-turbo-16k"):
+        self.model = model
+        self._openai = None
+
+    def _client(self):
+        if self._openai is None:
+            spec = importlib.util.find_spec("openai")
+            if spec is None:
+                raise ImportError("openai package not installed; install or switch to VLLMLLM.")
+            self._openai = importlib.import_module("openai")
+        return self._openai
 
     @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
-    def __call__(self, prompt):
+    def __call__(self, prompt: str) -> str:
+        openai = self._client()
         messages = [{"role": "user", "content": prompt}]
         completion = openai.chat.completions.create(model=self.model, messages=messages)
         response = completion.choices[0].message.content
         return response
+
+
+class VLLMLLM:
+    """vLLM-backed generator for local open-source models."""
+
+    def __init__(
+        self,
+        model: str,
+        *,
+        tensor_parallel_size: int = 1,
+        gpu_memory_utilization: float = 0.9,
+        trust_remote_code: bool = True,
+        quantization: Optional[str] = "awq",
+        max_model_len: int = 8192,
+        sampling_config: Optional[VLLMSamplingConfig] = None,
+        enforce_eager: bool = False,
+    ):
+        self.model = model
+        try:
+            from vllm import LLM, SamplingParams  # type: ignore
+        except ImportError as exc:  # pragma: no cover - optional dependency
+            raise ImportError("vllm is required for VLLMLLM. Install vllm or use HF engine.") from exc
+
+        self._SamplingParams = SamplingParams
+        self.sampling_config = sampling_config or VLLMSamplingConfig()
+        self.llm = LLM(
+            model=self.model,
+            tensor_parallel_size=tensor_parallel_size,
+            trust_remote_code=trust_remote_code,
+            gpu_memory_utilization=gpu_memory_utilization,
+            quantization=quantization,
+            enforce_eager=enforce_eager,
+            max_model_len=max_model_len,
+        )
+
+    def __call__(self, prompt: str, *, max_new_tokens: Optional[int] = None) -> str:
+        sample_cfg = self._build_sampling_params(max_new_tokens=max_new_tokens)
+        outputs = self.llm.generate([prompt], sampling_params=sample_cfg)
+        if not outputs or not outputs[0].outputs:
+            return ""
+        return outputs[0].outputs[0].text.strip()
+
+    def _build_sampling_params(self, *, max_new_tokens: Optional[int] = None):
+        cfg = self.sampling_config
+        params = self._SamplingParams(
+            temperature=cfg.temperature,
+            top_p=cfg.top_p,
+            max_tokens=max_new_tokens or cfg.max_new_tokens,
+        )
+        if cfg.repetition_penalty is not None:
+            params.repetition_penalty = cfg.repetition_penalty
+        return params
+
+
+class HFLLM:
+    """Transformers fallback for environments without vLLM."""
+
+    def __init__(
+        self,
+        model: str,
+        *,
+        device_map: str | int | None = "auto",
+        trust_remote_code: bool = True,
+        max_new_tokens: int = 256,
+        temperature: float = 0.1,
+        top_p: float = 0.9,
+    ):
+        from transformers import AutoModelForCausalLM, AutoTokenizer  # local import to avoid hard dep during lint
+
+        self.model_name = model
+        self.temperature = temperature
+        self.top_p = top_p
+        self.max_new_tokens = max_new_tokens
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, trust_remote_code=trust_remote_code)
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+        torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+        try:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                device_map=device_map,
+                trust_remote_code=trust_remote_code,
+                torch_dtype=torch_dtype,
+                use_safetensors=True,
+            )
+        except ValueError as exc:
+            raise ValueError(
+                "Failed to load model with safe loading. "
+                "Please use a safetensors checkpoint or upgrade torch to >=2.6."
+            ) from exc
+
+    def __call__(self, prompt: str, *, max_new_tokens: Optional[int] = None) -> str:
+        inputs = self.tokenizer(prompt, return_tensors="pt")
+        inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
+        generated = self.model.generate(
+            **inputs,
+            do_sample=self.temperature > 0,
+            temperature=self.temperature,
+            top_p=self.top_p,
+            max_new_tokens=max_new_tokens or self.max_new_tokens,
+            pad_token_id=self.tokenizer.eos_token_id,
+        )
+        output_ids = generated[0][inputs["input_ids"].shape[1]:]
+        return self.tokenizer.decode(output_ids, skip_special_tokens=True).strip()
 
 
 class FastChatLLM:
@@ -128,7 +165,6 @@ class FastChatLLM:
 
         output_ids = output_ids[0][len(input_ids[0]) :]
         response = self.tokenizer.decode(output_ids, skip_special_tokens=True).strip()
-        
         return response
 
 

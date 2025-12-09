@@ -8,6 +8,7 @@ Tweets:
 
 Facts:"""
 
+
 PREDICT_INSTRUCTION = """Given a list of facts, estimate their overall impact on the price movement of {ticker} stock. Give your response in this format:
 (1) Price Movement, which should be either Positive or Negative.
 (2) Explanation, which should be in a single, short paragraph.
@@ -45,12 +46,3 @@ Previous trial:
 {scratchpad}
 
 Reflection:"""
-
-# 新增簡化的 prompt
-SIMPLE_SUMMARIZE_INSTRUCTION = """Summarize the key financial facts about {ticker} from these tweets. Focus only on concrete information like earnings, revenue, stock price changes, company actions, or market data.
-
-Tweets:
-{tweets}
-
-Summary:"""
-

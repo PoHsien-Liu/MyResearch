@@ -1,102 +1,123 @@
-from summarize_module.summarizer import Summarizer
-import os, json
-import numpy as np
+from __future__ import annotations
+
+import json
+import logging
+from typing import Optional
+
 import pandas as pd
-from datetime import datetime, timedelta
-from tqdm import tqdm
+
+from common.data.loader import (
+    DEFAULT_NEG_THRESHOLD,
+    DEFAULT_POS_THRESHOLD,
+    get_record,
+    list_trading_days,
+    load_texts_for_day,
+)
+from summarize_module.summarizer import Summarizer
+
 
 class DataLoader:
-    def __init__(self, args):
+    def __init__(
+        self,
+        args,
+        summarizer: Optional[Summarizer] = None,
+        logger: Optional[logging.Logger] = None,
+    ):
+        self.dataset_name = getattr(args, "dataset_name", "SAMPLE")
         self.price_dir = args.price_dir
         self.tweet_dir = args.tweet_dir
+        self.news_csv_dir = getattr(args, "news_csv_dir", None)
         self.seq_len = args.seq_len
-        self.summarizer = Summarizer(args)
-        # Initialize cache for summaries
-        self.summary_cache = {}
+        self.train_ratio = getattr(args, "train_ratio", 0.8)
+        self.split_seed = getattr(args, "split_seed", 42)
+        self.label_strategy = getattr(args, "label_strategy", "legacy")
+        self.neg_threshold = getattr(args, "neg_threshold", DEFAULT_NEG_THRESHOLD)
+        self.pos_threshold = getattr(args, "pos_threshold", DEFAULT_POS_THRESHOLD)
+        self.splits_dir = getattr(args, "splits_dir", None)
+        self.max_tweets_per_day = getattr(args, "max_tweets_per_day", 50)
+        self.summarizer = summarizer or Summarizer()
+        self.logger = logger
 
+    def _log(self, msg: str) -> None:
+        if self.logger:
+            self.logger.info(msg)
 
-    def daterange(self, start_date, end_date):
-        for n in range(int((end_date - start_date).days)):
-            yield start_date + timedelta(n)
+    def _warn(self, msg: str) -> None:
+        if self.logger:
+            self.logger.warning(msg)
 
+    def _build_summary(self, ticker: str, target_date: str) -> Optional[str]:
+        """Summarize tweets/news within the seq_len window ending at target_date."""
+        try:
+            record = get_record(
+                dataset_name=self.dataset_name,
+                ticker=ticker,
+                date=target_date,
+                price_dir=self.price_dir,
+                tweet_dir=self.tweet_dir,
+                news_csv_dir=self.news_csv_dir,
+                seq_len=self.seq_len,
+                label_strategy=self.label_strategy,
+                neg_threshold=self.neg_threshold,
+                pos_threshold=self.pos_threshold,
+                logger=self.logger,
+            )
+        except Exception as exc:
+            self._warn(f"[DataLoader] skip {ticker} {target_date}: {exc}")
+            return None
 
-    def get_sentiment(self, date_str, price_path):
-        price_data = np.genfromtxt(price_path, dtype=str, skip_header=False)
-        price_chg = price_data[price_data[:, 0] == date_str][0, 1].astype(float)
+        summary_all = ""
+        text_dates = record.get("text_window_dates", [])
+        for seq_date in text_dates:
+            texts = load_texts_for_day(
+                dataset_name=self.dataset_name,
+                ticker=ticker,
+                date=seq_date,
+                tweet_dir=self.tweet_dir,
+                news_csv_dir=self.news_csv_dir,
+                logger=self.logger,
+            )
+            tweet_texts = [t.get("text") for t in texts if t.get("text")]
+            if not tweet_texts:
+                continue
+            if self.max_tweets_per_day and self.max_tweets_per_day > 0:
+                tweet_texts = tweet_texts[: self.max_tweets_per_day]
+            summary = self.summarizer.get_summary(ticker, tweet_texts, date=seq_date)
+            if summary and self.summarizer.is_informative(summary):
+                summary_all += f"{seq_date}\n{summary}\n\n"
+        return summary_all.rstrip() if summary_all else None
 
-        if price_chg > 0.0:
-            sentiment = "Positive"
-        else:
-            sentiment = "Negative"
-        return sentiment
-
-
-    def get_tweets(self, ticker, date_str):
-        tweets = []
-        tweet_path = os.path.join(self.tweet_dir, ticker, date_str)
-        if os.path.exists(tweet_path):
-            with open(tweet_path) as f:
-                lines = f.readlines()
-                for line in lines:
-                    tweet_obj = json.loads(line)
-                    tweets.append(tweet_obj['text'])
-        return tweets
-
-
-    def get_cached_summary(self, ticker, date_str, tweet_data):
-        """Get summary from cache or generate new one if not cached"""
-        cache_key = f"{ticker}_{date_str}"
-        if cache_key not in self.summary_cache:
-            summary = self.summarizer.get_summary(ticker, date_str, tweet_data)
-            if summary and summary is not None and summary != "" and self.summarizer.is_informative(summary):
-                self.summary_cache[cache_key] = summary
-            else:
-                self.summary_cache[cache_key] = None
-        return self.summary_cache[cache_key]
-
-
-    def load(self, flag):
+    def load(self, flag: str) -> pd.DataFrame:
+        """Load train/test splits using the shared loader and summarize texts."""
+        mode = "train" if flag == "train" else "test"
         data = pd.DataFrame()
-        stock_files = os.listdir(self.price_dir)
-        
-        with tqdm(total=len(stock_files), desc="Processing Stocks", position=0, leave=True) as outer_bar:
-            for file in os.listdir(self.price_dir):
-                price_path = os.path.join(self.price_dir, file)
-                ordered_price_data = np.flip(np.genfromtxt(price_path, dtype=str, skip_header=False), 0)
-                ticker = file[:-4]
 
-                tes_idx = round(len(ordered_price_data) * 0.8)
-                end_idx = len(ordered_price_data)
+        samples = list_trading_days(
+            dataset_name=self.dataset_name,
+            price_dir=self.price_dir,
+            mode=mode,
+            seq_len=self.seq_len,
+            split_root=getattr(self, "splits_dir", None),
+            train_ratio=self.train_ratio,
+            split_seed=self.split_seed,
+            label_strategy=self.label_strategy,
+            neg_threshold=self.neg_threshold,
+            pos_threshold=self.pos_threshold,
+            logger=self.logger,
+        )
 
-                if flag == "train":
-                    # data_range = range(tes_idx)
-                    data_range = range(14)
-                else:
-                    data_range = range(tes_idx, end_idx)
-
-                with tqdm(total=len(data_range), desc=f"{ticker} Processing", position=1, leave=True) as inner_bar:
-                    for idx in data_range:
-                        summary_all = ""
-
-                        end_date_str = ordered_price_data[idx, 0]
-                        tqdm.write(f"End Date: {end_date_str}")
-                        end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
-                        start_date = end_date - timedelta(days=self.seq_len)
-                        target = self.get_sentiment(end_date_str, price_path)
-                        
-                        for seq_date in self.daterange(start_date, end_date):
-                            seq_date_str = seq_date.strftime("%Y-%m-%d")    
-
-                            tweet_data = self.get_tweets(ticker, seq_date_str)
-                            summary = self.get_cached_summary(ticker, seq_date_str, tweet_data)
-
-                            if summary:
-                                summary_all = summary_all + seq_date_str + "\n" + summary + "\n\n"
-
-                        if summary_all != "":
-                            data = pd.concat([data, pd.DataFrame([{'ticker': ticker, 'summary': summary_all.rstrip(), 'target': target}])], ignore_index=True)
-
-                        inner_bar.update(1)
-                outer_bar.update(1)
-
-            return data
+        for sample in samples:
+            ticker = sample["ticker"]
+            target_date = sample["date"]
+            target = sample["label"]
+            summary_all = self._build_summary(ticker, target_date)
+            if summary_all:
+                row = {
+                    "ticker": ticker,
+                    "summary": summary_all,
+                    "target": target,
+                    "prediction_date": target_date,
+                    "sample_id": f"{ticker}_{target_date}",
+                }
+                data = pd.concat([data, pd.DataFrame([row])], ignore_index=True)
+        return data

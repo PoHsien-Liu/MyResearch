@@ -27,14 +27,13 @@
   - main.py：CLI 入口，任務包含 clean / extract_mentions / embed / build_index / build_index_pipeline / eval。
   - models/STARE/pipeline.py：RAG 推論流程與 LLM 生成（目前待實作）。
 - datasets/：所有方法共用資料集（sample_data、SEP、CMIN、stocknet）。
-- outputs/：所有產物（請加入 .gitignore）
-  - results/{dataset}/{method}/{model}/{exp}/
-  - indices/{dataset}/{embed_model}/：STARE RAG 索引與中間產物（cleaned*.parquet、cleaned_with_mentions*.parquet、embeddings.npy、metadata.parquet、index.faiss、dropped.parquet）
+- outputs/：僅存放各方法對測試/驗證資料的最終推論與評估結果（results、predictions、eval 等），請加入 .gitignore
+- STARE/pipeline_data/：STARE 中間產物專用（cleaned/mentions/embeddings/index/factors/sft/adapter 等），避免與其他方法結果混放
   - cache/summaries/{model}/{method}/{ticker}/{date}.json
 ++ 注意：CMIN price/raw 中有優先股代碼 C-PJ、CTA-PB、SPG-PJ、WFC-PL，但 news/raw 無對應檔案，已在共用 dataloader 排除，不應納入樣本。
 
 - 環境與路徑
-- 執行 CLI 或驗收流程前，請先進入指定的 Conda 環境：`source ~/miniconda3/etc/profile.d/conda.sh && conda activate stare`。
+- 執行 CLI 或驗收流程前，請先進入指定的 Conda 環境：`source ~/miniconda3/etc/profile.d/conda.sh && conda activate stare`；執行 SEP 方法請改用 `conda activate sep` 並保持相同 DATASETS_DIR/OUTPUTS_DIR 設定。
 - 根據任務選擇對應的 `conda` 環境規格：
   - `sep-environment.yml`：meta-llama/Meta-Llama-3.1-8B-Instruct 相關訓練與推論（STARE/TDMLLM/STARE pipeline）需升級到 torch 2.5+ 的組合。
   - `fingpt-environment.yml`：針對 FinGPT adapter 的特定套件組（transformers 4.32 + torch 2.0.1 + peft 0.5.0）以避免與 `sep` 環境衝突；建立後在 `fingpt` 環境內執行 `tools/setup_fingpt_env.sh`（會建立 `libittnotify.so` 並設定 `LD_PRELOAD`，以避免 `iJIT_NotifyEvent` 缺失）。
@@ -65,35 +64,36 @@
 - 共同結果目錄
   - outputs/results/{dataset}/{method}/{model}/{exp}/
 
-輸出檔案結構（每次實驗，統一格式）
+輸出檔案結構（每次實驗，統一格式；不包含 used_event_ids）
 - 必備
   - args.json：完整參數與環境快照。
   - run.log：執行日誌（包含開始/結束時間與裝置資訊）。
   - eval.json：統一評估結果（accuracy、mcc、precision、recall、f1、confusion 等）與樣本統計（total/valid/invalid、wall_time）。
   - 逐樣本預測（便於跨方法比較與彙整）
-  - predictions.jsonl：每行一筆記錄，建議欄位：
+  - predictions.jsonl：每行一筆記錄，建議欄位（不含 used_event_ids）：
     - sample_id（{ticker}_{prediction_date}）、dataset、method、model、experiment_name
     - ticker、prediction_date、ground_truth
     - prediction：{"label": "Positive"|"Negative", "confidence": null|number}
+    - reason：短解釋文本（必備）
     - raw_response（可選，預設保留並可截斷）
     - prompts（可選）：{"system": str, "user": str}
     - timing（可選）：{"latency_ms": number}
   - predictions.csv：扁平欄位版（至少含 sample_id,ticker,prediction_date,y_true,y_pred,model,method,dataset,experiment_name），並需額外保存預測使用的 prompt 欄位（system_prompt, user_prompt）。
-- RAG 與資料處理產物（STARE 與共用索引用）
+- RAG 與資料處理產物（STARE 專用，存於 STARE/pipeline_data）
   - indices/{dataset}/{embed_model}/embeddings.npy
- - indices/{dataset}/{embed_model}/metadata.parquet
- - indices/{dataset}/{embed_model}/index.faiss（若安裝 faiss）
- - indices/{dataset}/{embed_model}/dropped.parquet（tweet 過濾記錄）
+  - indices/{dataset}/{embed_model}/metadata.parquet
+  - indices/{dataset}/{embed_model}/index.faiss（若安裝 faiss）
+  - indices/{dataset}/{embed_model}/dropped.parquet（tweet 過濾記錄）
 
 共同評估模組
 - 分類指標：accuracy, mcc, precision, recall, f1, confusion_matrix。
 - 標籤策略：預設嚴格，Unknown/非法 prediction 視為錯（翻轉真值扣分），`unknown_policy` 可切換為 as_invalid（跳過並回報 coverage）。
-- 解釋指標（可選）：證據條數、citation 覆蓋率、解釋長度與可讀性統計。
+- 解釋指標（可選）：解釋長度、可讀性、金融合理性等；本版本不以 citation/grounding 為主指標，相關分析若有僅為 optional。
 - 寫檔：統一以 eval.json 格式輸出，便於跨方法比較與彙整。
 - 解釋評估：`python -m STARE.main --task explanation_eval --dataset_name {SEP|STOCKNET|CMIN-US|SAMPLE} --predictions_csv PATH --stock_scope {all|top1} --only_correct {true|false} --eval_llm_backend {qwen|llama|openai|gemini} --eval_llm_model MODEL --explanation_eval_output_dir outputs/... --max_eval_samples N`；輸出 `explanation_eval_samples.jsonl` 與 `explanation_eval_summary.json`。
 
 LLM 評分後端
-- 在專案根目錄建立 `stare_llm_config.yaml`（可由 `stare_llm_config.example.yaml` 複製），設定各 backend（qwen/llama）的模型、量化、tensor parallel 等參數；可用環境變數 `STARE_LLM_CONFIG` 指定路徑。
+- 在 STARE/llm_backend/ 目錄下放 `stare_llm_config.yaml`（可由 `stare_llm_config.example.yaml` 複製），設定各 backend（qwen/llama）的模型、量化、tensor parallel 等參數；可用環境變數 `STARE_LLM_CONFIG` 指定路徑。
 - 預設走內嵌 vLLM（Python 直接載入，不開 HTTP 端口），不需 `base_url`/`api_key`。若未來需 HTTP 介面，可自行包裝 OpenAI 相容伺服器但非預設。
 
 Model Adapter 介面（可換 foundation model）
@@ -120,15 +120,24 @@ Baselines 整合規範
   - 已有完整流程；將結果輸出路徑、metrics 與 log 統一到上述規範。
   - Summarizer 快取路徑統一到 outputs/cache/summaries/{model}/{method}/...
 
+SEP 方法重載與整合（sep 環境）
+- 環境：所有 SEP 相關腳本一律 `source ~/miniconda3/etc/profile.d/conda.sh && conda activate sep`，保持 DATASETS_DIR/OUTPUTS_DIR 由環境變數決定。
+- 依賴與版本：基於 upstream `requirements.txt` 建置 sep 環境後，針對衝突（torch/transformers/bitsandbytes/datasets 等）調整但需留存最小版本差異，確保與 `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4` 與 vLLM 版本相容；調整後請更新 requirements 清單與 WRAPPER.md。
+- Summarize LLM：原用 ChatGPT-3.5，改用本地 vLLM 後端載入 `hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4`；維持原 summarizer/prompt 流程與解碼超參數，只替換模型呼叫介面，不依賴外部 API。
+- 資料載入：保留原演算法邏輯，但將資料讀取/切分改為共用 loader（統一 split 與欄位）以支援 SAMPLE/STOCKNET/CMIN/SEP；應透明映射原欄位且不改變特徵/前處理行為。
+- Deprecated 修正：檢查 transformers/trl/peft 等新版本的棄用 API 或參數名稱，僅加入向後相容層或替換等效參數以維持原行為。
+- 評估與輸出：沿用 SEP 原評估流程與指標，所有結果寫入 `outputs/results/{dataset}/SEP/{model}/{experiment_name}/`，包含 args.json、run.log、eval.json、predictions.jsonl、predictions.csv，欄位格式與其他 baseline 一致。
+
 STARE（RAG）設計規範
-- Pipeline（build_index_pipeline 任務）：clean → extract_mentions → embed → build_index，所有中間檔案（cleaned/dropped/metadata/embeddings/index）都寫入 `outputs/indices/{dataset}/{embed_model}/`。
+- Pipeline（build_index_pipeline 任務）：clean → extract_mentions → embed → build_index，所有中間檔案（cleaned/dropped/metadata/embeddings/index）都寫入 `STARE/pipeline_data/indices/{dataset}/{embed_model}/`。
+- 嵌入模型：統一使用 `FinLang/finance-embeddings-investopedia`，不要替換其他 embedding model。
 - Clean：rule-based 規則（min_tokens、emoji/hashtag/URL 限制、retweet 檢查）為主，可透過 `--enable_llm_filter` 串接 LLM 第二層篩選；cleaned 與 dropped 需分別存檔。
 - Extract_mentions：針對 cleaned 檔案生成 mentioned_tickers、cashtag_count、url_count 等 metadata。
 - Embed：預設以 sentence-transformers 產生 embeddings，同時輸出 metadata.parquet；向量/metadata 的 row id 須與後續索引保持對齊。
 - Build_index：建立 FAISS IndexFlatIP/L2；若 `--rebuild_index` 為真則覆蓋舊檔，並確保索引路徑依 dataset/embed_model 分層。
-- 檢索與生成（models/STARE/pipeline.py 待實作）：
-  - 以樣本（ticker + 時間）組查詢，檢索 top‑k 文本，組合 prompt（含 citations），再生成預測與可解釋文字。
-  - 輸出需附 citation，引用 metadata.parquet 的列索引或 source_path + 日期資訊。
+- 檢索與生成：
+  - 以樣本（ticker + 時間）組查詢，檢索 top‑k 文本，組合 prompt，再生成預測與可解釋文字。
+  - 完全移除 used_event_ids；不需 citation 監督。
 
 日誌、重現與安全
 - 每次實驗固定記錄：args.json、run.log、隨機種子（numpy/torch/cuda）。
@@ -173,3 +182,8 @@ STARE（RAG）設計規範
   - 實作 LLMFactor；FinGPT/FinBert 零樣本/分類基線。
 - Phase 8：多模態/跨公司擴充
   - RAG 檢索擴張到關聯公司，加入價量特徵。
+
+附加準則（依 NEW_RULE_AGENTS.md 更新）
+- 核心任務：預測漲跌＋短解釋，聚焦 prediction 與 reason；可用 teacher 生成 pseudo explanation 蒸餾。
+- 不做 citation/grounding 監督：used_event_ids 已移除，不設 loss、不作為主評估指標。
+- 評估重點：分類指標＋解釋品質（合理性/一致性/可讀性），避免以 citation 覆蓋率決定主結論。

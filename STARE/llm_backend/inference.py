@@ -3,11 +3,18 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple
 
 from STARE.llm_backend.llm_config import get_backend_config
 
-_LLM_CACHE: Dict[Tuple[str, str, int, Optional[str], Optional[int]], "LLM"] = {}
+if TYPE_CHECKING:
+    from vllm import LLM  # type: ignore
+
+# cache key: (model_name, quantization, tp_size, dtype, max_model_len, gpu_mem_util, enforce_eager)
+_LLM_CACHE: Dict[
+    Tuple[str, str, int, Optional[str], Optional[int], Optional[float], Optional[bool]],
+    "LLM",
+] = {}
 
 
 @dataclass
@@ -104,13 +111,13 @@ def _build_prompts(llm: "LLM", items: List[PromptLike]) -> List[str]:
         except Exception:
             # Fallback: simple concatenation if template unavailable
             prompt = f"{req.system}\n\n{req.user}"
-        prompts.append(prompt)
+        prompts.append(str(prompt))
     return prompts
 
 
 def run_inference_batch(
     requests: Iterable[PromptLike],
-    backend: str = "llama",
+    backend: str = "llama_70B",
     model: Optional[str] = None,
     **gen_kwargs: Any,
 ) -> List[str]:

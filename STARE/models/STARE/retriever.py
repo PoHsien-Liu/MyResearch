@@ -81,7 +81,11 @@ class StareRetriever:
             if candidate_idx is not None and len(candidate_idx) == 0:
                 return []
 
-        query_vec = self.encoder.encode([text], normalize_embeddings=True)
+        query_vec = self.encoder.encode(
+            [text],
+            normalize_embeddings=True,
+            show_progress_bar=False,  # avoid noisy per-query tqdm output
+        )
 
         if candidate_idx is not None:
             # subset search: rebuild a tiny index on filtered rows

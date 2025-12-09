@@ -21,7 +21,7 @@ from transformers import (
 )
 from transformers.trainer_utils import set_seed
 
-from STARE.utils.paths import ensure_dir, get_outputs_dir
+from STARE.utils.paths import ensure_dir, get_outputs_dir, get_pipeline_data_dir
 
 LOGGER = logging.getLogger("stare.sft")
 
@@ -39,10 +39,10 @@ def _model_slug(name: Optional[str]) -> str:
 
 def _auto_sft_path(dataset: str, model_slug: str, experiment: str, split: str) -> Path:
     return (
-        get_outputs_dir()
-        / "results"
+        get_pipeline_data_dir()
+        / "sft"
+        / "samples"
         / dataset.upper()
-        / "STARE"
         / model_slug
         / experiment
         / f"sft_samples_{split}.jsonl"
@@ -273,7 +273,7 @@ def run_sft_finetune_task(args) -> None:
     dataset = args.dataset_name.upper()
     exp = getattr(args, "experiment_name", None) or str(int(time.time()))
     model_slug = _model_slug(base_model)
-    out_dir = ensure_dir(get_outputs_dir() / "results" / dataset / "STARE" / model_slug / exp / "sft")
+    out_dir = ensure_dir(get_pipeline_data_dir() / "sft" / "checkpoints" / dataset / model_slug / exp)
 
     train_path = Path(getattr(args, "train_sft_path", "") or _auto_sft_path(dataset, model_slug, exp, "sft_train"))
     val_path_arg = getattr(args, "val_sft_path", None)

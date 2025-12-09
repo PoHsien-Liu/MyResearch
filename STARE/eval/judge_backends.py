@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import os
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
 from STARE.llm_backend.llm_config import get_backend_config
 from STARE.llm_backend.inference import PromptLike, run_inference_batch
@@ -73,3 +73,48 @@ def call_judge_backend(
         max_tokens=max_tokens,
     )
     return resp.choices[0].message.content  # type: ignore[return-value]
+
+
+def call_judge_backend_batch(
+    backend: BackendName,
+    system_prompt: str,
+    user_prompts: List[str],
+    model_name: str,
+    temperature: float = 0.0,
+    max_tokens: int = 1024,
+) -> List[str]:
+    """Batch version of call_judge_backend. Falls back to sequential when base_url is set."""
+    cfg = get_backend_config(backend)
+    base_url = _default_base_url(backend) or cfg.get("base_url")
+
+    if not base_url:
+        items = [
+            PromptLike(
+                system=system_prompt,
+                user=up,
+                model=model_name,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+            for up in user_prompts
+        ]
+        return run_inference_batch(
+            items,
+            backend=backend,
+            model=model_name,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+
+    # Remote HTTP path: sequential for compatibility.
+    return [
+        call_judge_backend(
+            backend=backend,
+            system_prompt=system_prompt,
+            user_prompt=up,
+            model_name=model_name,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        for up in user_prompts
+    ]

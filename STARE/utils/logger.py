@@ -1,30 +1,23 @@
-"""Logger helper utilities for STARE."""
+"""Simple logger setup for STARE scripts."""
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 
-def setup_logger(name: str = "stare", log_file: Optional[Path] = None, level: int = logging.INFO) -> logging.Logger:
-    """Configure and return a logger with optional file handler."""
+def setup_logger(name: str, log_file: Path | None = None, level: int = logging.INFO) -> logging.Logger:
     logger = logging.getLogger(name)
-    if logger.handlers:
-        return logger
-
     logger.setLevel(level)
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(formatter)
-    logger.addHandler(stream_handler)
-
     if log_file:
         log_file.parent.mkdir(parents=True, exist_ok=True)
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-
+        fh = logging.FileHandler(log_file, encoding="utf-8")
+        fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+        logger.addHandler(fh)
+    if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
+        sh = logging.StreamHandler()
+        sh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+        logger.addHandler(sh)
+    logger.propagate = False
     return logger
 
 

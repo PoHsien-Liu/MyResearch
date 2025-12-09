@@ -6,11 +6,11 @@ import json
 import logging
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import pandas as pd
 
-from STARE.eval.filters import filter_by_correct, filter_by_stock_scope
+from STARE.eval.filters import StockScope, filter_by_correct, filter_by_stock_scope
 from STARE.eval.runner import evaluate_batch
 from STARE.eval.judge_backends import BackendName
 from STARE.eval.prompt_template import METRIC_KEYS
@@ -23,7 +23,7 @@ LOGGER = logging.getLogger(__name__)
 class EvalConfig:
     predictions_csv: Path
     dataset_name: str
-    stock_scope: str
+    stock_scope: StockScope
     only_correct: bool
     eval_llm_backend: BackendName
     eval_llm_model: str
@@ -43,7 +43,7 @@ def bind_explanation_eval_args(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--only_correct",
-        default="true",
+        default="false",
         choices=["true", "false"],
         help="If true, only evaluate samples where y_true == y_pred",
     )
@@ -68,15 +68,15 @@ def bind_explanation_eval_args(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def parse_args(argv: List[str] | None = None) -> argparse.Namespace:
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Explanation evaluation with LLM judge")
     parser.add_argument("--predictions_csv", required=True, help="Path to predictions.csv")
     parser.add_argument("--dataset_name", required=True, help="Dataset name (SEP/StockNet/CMIN-US/SAMPLE)")
     parser.add_argument("--stock_scope", default="top1", choices=["all", "top1"], help="Stock scope filtering")
-    parser.add_argument("--only_correct", default="true", choices=["true", "false"], help="Keep only correct preds")
+    parser.add_argument("--only_correct", default="false", choices=["true", "false"], help="Keep only correct preds")
     parser.add_argument("--eval_llm_backend", required=True, choices=["qwen", "llama", "openai", "gemini"], help="Judge backend")
     parser.add_argument("--eval_llm_model", required=True, help="Judge model name")
-    parser.add_argument("--output_dir", required=True, help="Output directory for eval artifacts")
+    parser.add_argument("--output_dir", default=None, help="Output directory for eval artifacts (default: predictions_csv parent)")
     parser.add_argument("--experiment_name", default=None, help="Optional experiment name")
     parser.add_argument("--max_eval_samples", type=int, default=None, help="Optional cap on number of samples (for dry run)")
     return parser.parse_args(argv)
@@ -172,11 +172,11 @@ def run_explanation_eval_task(args: argparse.Namespace) -> None:
         raise ValueError("--eval_llm_backend and --eval_llm_model are required for explanation_eval task")
     output_dir = args.explanation_eval_output_dir or args.output_dir
     if not output_dir:
-        raise ValueError("--explanation_eval_output_dir or --output_dir must be specified")
+        output_dir = str(Path(args.predictions_csv).parent)
     cfg = EvalConfig(
         predictions_csv=Path(args.predictions_csv),
         dataset_name=args.dataset_name,
-        stock_scope=args.stock_scope,
+        stock_scope=cast(StockScope, args.stock_scope),
         only_correct=str(args.only_correct).lower() == "true",
         eval_llm_backend=args.eval_llm_backend,  # type: ignore[assignment]
         eval_llm_model=args.eval_llm_model,
@@ -187,17 +187,18 @@ def run_explanation_eval_task(args: argparse.Namespace) -> None:
     run_explanation_eval(cfg)
 
 
-def main(argv: List[str] | None = None) -> None:
+def main(argv: Optional[List[str]] = None) -> None:
     logging.basicConfig(level=logging.INFO)
     args = parse_args(argv)
+    output_dir = args.output_dir or str(Path(args.predictions_csv).parent)
     cfg = EvalConfig(
         predictions_csv=Path(args.predictions_csv),
         dataset_name=args.dataset_name,
-        stock_scope=args.stock_scope,
+        stock_scope=cast(StockScope, args.stock_scope),
         only_correct=args.only_correct.lower() == "true",
         eval_llm_backend=args.eval_llm_backend,  # type: ignore[assignment]
         eval_llm_model=args.eval_llm_model,
-        output_dir=Path(args.output_dir),
+        output_dir=Path(output_dir),
         experiment_name=args.experiment_name,
         max_samples=args.max_eval_samples,
     )

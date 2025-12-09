@@ -9,8 +9,6 @@ from transformers import (
 from peft import LoraConfig, get_peft_model, TaskType
 from tqdm import tqdm
 
-from baselines.FinGPT.model import FinGPTAdapter, FinGPTConfig, GenerationResult
-
 
 class LLaMALLM:
     def __init__(self, args, logger):
@@ -228,57 +226,3 @@ class LLaMALLM:
         )
         return results
 
-
-class FinGPTLLM:
-    """Adapter that lets TDMLLM pipeline reuse the FinGPT loader + generator."""
-
-    def __init__(self, args, logger):
-        self.args = args
-        self.logger = logger
-        max_tokens = getattr(args, "max_new_tokens_predict", 256)
-        adapter_base_model = "meta-llama/Meta-Llama-3-8B"
-        requested = getattr(args, "base_model", None)
-        if requested and requested != adapter_base_model:
-            logger.warning(
-                f"[FinGPTLLM] FinGPT adapters are trained on {adapter_base_model}; overriding requested "
-                f"base_model {requested}."
-            )
-        self.config = FinGPTConfig(
-            base_model=adapter_base_model,
-            fingpt_lora=getattr(args, "fingpt_lora", None),
-            max_new_tokens=max_tokens,
-            temperature=getattr(args, "temperature", 0.0),
-            top_p=getattr(args, "top_p", 0.9),
-            do_sample=getattr(args, "do_sample", False),
-            device=getattr(args, "device", None),
-            device_map=getattr(args, "device_map", None),
-            torch_dtype=getattr(args, "torch_dtype", None),
-            load_in_4bit=getattr(args, "load_in_4bit", False),
-            bnb_4bit_compute_dtype=getattr(args, "bnb_4bit_compute_dtype", "float16"),
-            bnb_4bit_quant_type=getattr(args, "bnb_4bit_quant_type", "nf4"),
-            bnb_4bit_use_double_quant=getattr(args, "bnb_4bit_use_double_quant", True),
-        )
-        self.adapter = FinGPTAdapter(self.config, logger=logger)
-
-    def _build_generation_kwargs(self, max_new_tokens):
-        kwargs = {}
-        if max_new_tokens is not None:
-            kwargs["max_new_tokens"] = max_new_tokens
-        return kwargs or None
-
-    def __call__(self, system_prompt, user_prompt, *, max_new_tokens=None):
-        result: GenerationResult = self.adapter.generate(
-            system_prompt,
-            user_prompt,
-            generation_kwargs=self._build_generation_kwargs(max_new_tokens),
-        )
-        return result.text
-
-    def batch_inference(self, system_prompts, user_prompts, *, max_new_tokens=None):
-        assert len(system_prompts) == len(user_prompts), "system_prompts 和 user_prompts 長度需一致"
-        prompts = list(zip(system_prompts, user_prompts))
-        results = self.adapter.batch_generate(
-            prompts,
-            generation_kwargs=self._build_generation_kwargs(max_new_tokens),
-        )
-        return [res.text for res in results]

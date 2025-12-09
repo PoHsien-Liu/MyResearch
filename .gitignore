@@ -11,6 +11,9 @@ baselines/TDMLLM/company_descriptions_cache/
 baselines/TDMLLM/summaries/
 splits/
 stare_llm_config.yaml
+pyrightconfig.json
+.cache/
+STARE/pipeline_data/
 
 # Ignore all vector_store artifacts
 **/vector_store/

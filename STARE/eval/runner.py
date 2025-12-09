@@ -6,10 +6,10 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Callable, List, Mapping, MutableMapping
+from typing import Any, Dict, Callable, List, Mapping, MutableMapping, Sequence
 
 from STARE.eval.metrics import evaluate_predictions_file
-from STARE.eval.judge_backends import BackendName, call_judge_backend
+from STARE.eval.judge_backends import BackendName, call_judge_backend, call_judge_backend_batch
 from STARE.eval.prompt_template import SYSTEM_PROMPT, build_user_prompt, METRIC_KEYS
 
 
@@ -190,31 +190,122 @@ def evaluate_single_explanation(
 def evaluate_batch(
     backend: BackendName,
     model_name: str,
-    records: List[Mapping[str, Any]],
+    records: Sequence[Mapping[str, Any]],
     call_backend_fn: Callable[..., str] | None = None,
+    call_backend_batch_fn: Callable[..., List[str]] | None = None,
+    batch_size: int = 4,
 ) -> List[Dict[str, Any]]:
-    """Evaluate a batch of explanations."""
-    results: List[Dict[str, Any]] = []
+    """Evaluate a batch of explanations with optional batching for speed."""
+    if call_backend_batch_fn is None:
+        if call_backend_fn is not None:
+            def call_backend_batch_fn(
+                backend: BackendName,
+                system_prompt: str,
+                user_prompts: List[str],
+                model_name: str,
+                temperature: float = 0.0,
+                max_tokens: int = 1024,
+            ) -> List[str]:
+                return [
+                    call_backend_fn(
+                        backend=backend,
+                        system_prompt=system_prompt,
+                        user_prompt=up,
+                        model_name=model_name,
+                        temperature=temperature,
+                        max_tokens=max_tokens,
+                    )
+                    for up in user_prompts
+                ]
+        else:
+            call_backend_batch_fn = call_judge_backend_batch
+
+    prompts: List[str] = []
+    metas: List[Dict[str, Any]] = []
     for rec in records:
-        res = evaluate_single_explanation(
-            backend=backend,
-            model_name=model_name,
-            sample_id=str(rec.get("sample_id", "")),
-            ticker=str(rec.get("ticker", "")),
-            date=str(rec.get("date", rec.get("prediction_date", ""))),
-            context_texts=str(rec.get("context_texts", rec.get("context", ""))),
-            y_true=str(rec.get("y_true", rec.get("ground_truth", ""))),
-            y_pred=str(rec.get("y_pred", rec.get("prediction", ""))),
-            predicted_movement=rec.get("predicted_movement"),
-            explanation=str(rec.get("explanation", rec.get("raw_response", ""))),
-            extra_meta={
-                k: v for k, v in rec.items() if k not in {
-                    "sample_id", "ticker", "date", "prediction_date",
-                    "context_texts", "context", "y_true", "ground_truth",
-                    "y_pred", "prediction", "predicted_movement", "explanation", "raw_response"
-                }
-            },
-            call_backend_fn=call_backend_fn,
+        sample_id = str(rec.get("sample_id", ""))
+        ticker = str(rec.get("ticker", ""))
+        date = str(rec.get("date", rec.get("prediction_date", "")))
+        context_texts = str(rec.get("context_texts", rec.get("context", "")))
+        y_true = str(rec.get("y_true", rec.get("ground_truth", "")))
+        y_pred = str(rec.get("y_pred", rec.get("prediction", "")))
+        prompt_movement = rec.get("predicted_movement") or _normalize_movement(y_pred)
+        explanation = str(rec.get("explanation", rec.get("raw_response", "")))
+        user_prompt = build_user_prompt(
+            ticker=ticker,
+            date=date,
+            context_texts=context_texts,
+            predicted_movement=prompt_movement,
+            explanation=explanation,
         )
-        results.append(res)
+        prompts.append(user_prompt)
+        metas.append(
+            {
+                "sample_id": sample_id,
+                "ticker": ticker,
+                "date": date,
+                "y_true": y_true,
+                "y_pred": y_pred,
+                "predicted_movement": prompt_movement,
+                "explanation": explanation,
+                "extra_meta": {
+                    k: v
+                    for k, v in rec.items()
+                    if k
+                    not in {
+                        "sample_id",
+                        "ticker",
+                        "date",
+                        "prediction_date",
+                        "context_texts",
+                        "context",
+                        "y_true",
+                        "ground_truth",
+                        "y_pred",
+                        "prediction",
+                        "predicted_movement",
+                        "explanation",
+                        "raw_response",
+                    }
+                },
+            }
+        )
+
+    results: List[Dict[str, Any]] = []
+    if batch_size is None or batch_size <= 0:
+        batch_size = len(prompts) or 1
+
+    for start in range(0, len(prompts), batch_size):
+        end = start + batch_size
+        chunk_prompts = prompts[start:end]
+        chunk_metas = metas[start:end]
+        raw_responses = call_backend_batch_fn(
+            backend=backend,
+            system_prompt=SYSTEM_PROMPT,
+            user_prompts=chunk_prompts,
+            model_name=model_name,
+        )
+        for raw_response, meta in zip(raw_responses, chunk_metas):
+            json_text = extract_json_from_text(raw_response)
+            parsed = json.loads(json_text)
+            metric_scores = parsed.get("metric_scores", {})
+            overall_comment = parsed.get("overall_comment", "")
+            for key in METRIC_KEYS:
+                metric_scores.setdefault(key, None)
+            result: MutableMapping[str, Any] = {
+                "sample_id": meta["sample_id"],
+                "ticker": meta["ticker"],
+                "date": meta["date"],
+                "y_true": meta["y_true"],
+                "y_pred": meta["y_pred"],
+                "predicted_movement": meta["predicted_movement"],
+                "backend": backend,
+                "judge_model_name": model_name,
+                "metric_scores": metric_scores,
+                "overall_comment": overall_comment,
+                "raw_response": raw_response,
+            }
+            result.update(meta.get("extra_meta", {}))
+            results.append(result)
+
     return results

@@ -10,9 +10,10 @@ import yaml
 
 
 DEFAULT_CONFIG_ENV = "STARE_LLM_CONFIG"
+_MODULE_DIR = Path(__file__).resolve().parent
 DEFAULT_CONFIG_LOCATIONS = [
-    Path("stare_llm_config.yaml"),
-    Path("stare_llm.yaml"),
+    _MODULE_DIR / "stare_llm_config.yaml",
+    _MODULE_DIR / "stare_llm.yaml",
     Path.home() / ".config" / "stare_llm_config.yaml",
 ]
 
@@ -38,7 +39,18 @@ def get_backend_config(backend: str) -> Dict[str, Any]:
     """Return configuration for a backend ('qwen', 'llama', ...)."""
     data = _load_config()
     backends = data.get("backends", {}) if isinstance(data, dict) else {}
-    cfg = backends.get(backend, {})
-    if not isinstance(cfg, dict):
-        return {}
-    return cfg
+    backend_norm = (backend or "").lower()
+    candidates = [
+        backends.get(backend),
+        backends.get("llama_70B") if backend == "llama" else None,
+        backends.get("llama-70b") if backend == "llama" else None,
+        backends.get("llama70b") if backend == "llama" else None,
+    ]
+    # case-insensitive match
+    for name, val in backends.items():
+        if isinstance(name, str) and name.lower() == backend_norm:
+            candidates.append(val)
+    for cfg in candidates:
+        if isinstance(cfg, dict):
+            return cfg
+    return {}

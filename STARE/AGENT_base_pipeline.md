@@ -83,7 +83,6 @@
    - 呼叫 `llama-8b` 或其他 base LLM，要求輸出 JSON：  
      - `"prediction": "UP" | "DOWN"`  
      - `"reason": "<解釋文本>"`  
-     - `"used_event_ids": [ ... ]`  
 
 6. **SFT 訓練資料構建（Step 6）**：  
    - 將上述 prompt + LLM 回覆 + `ground_truth` label 轉換成統一格式的 SFT 訓練樣本（例如 chat-style JSONL）。  
@@ -297,7 +296,6 @@ Respond in strict JSON with the following schema:
 {
   "prediction": "UP" or "DOWN",
   "reason": "<2-5 sentences explaining the key drivers, explicitly citing event IDs like (1), (3) and summarizing the recent price trend>",
-  "used_event_ids": [<list of integers corresponding to the events used, e.g. [1, 3]>]
 }
 
 Do not output anything outside this JSON.
@@ -336,7 +334,7 @@ Based on the 5-day price pattern and the listed news events, please fill in the 
     },
     {
       "role": "assistant",
-      "content": "{ \"prediction\": \"UP\", \"reason\": \"...\", \"used_event_ids\": [1, 3] }"
+      "content": "{ \"prediction\": \"UP\", \"reason\": \"...\" }"
     }
   ],
   "metadata": {

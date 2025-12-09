@@ -28,15 +28,8 @@ def run_embed(args) -> None:
     logger = setup_logger("stare.embed", log_file=log_file)
 
     cleaned_path = output_dir / "cleaned_with_mentions.parquet"
-    # 若當前 embed_model 路徑下沒有 cleaned，退回 default slug
     if not cleaned_path.exists():
-        default_dir = indices_dir(args.dataset_name, None)
-        alt_path = default_dir / "cleaned_with_mentions.parquet"
-        if alt_path.exists():
-            cleaned_path = alt_path
-            logger.info("Using cleaned_with_mentions from default path: %s", cleaned_path)
-        else:
-            raise FileNotFoundError(f"cleaned_with_mentions.parquet not found at {cleaned_path} or {alt_path}")
+        raise FileNotFoundError(f"cleaned_with_mentions.parquet not found at {cleaned_path}; run extract_mentions first")
 
     logger.info("Loading cleaned_with_mentions from %s", cleaned_path)
     df = pd.read_parquet(cleaned_path)
