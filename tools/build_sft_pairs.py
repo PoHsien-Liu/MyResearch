@@ -77,8 +77,8 @@ def main() -> None:
     parser.add_argument("--split_root", default="splits", help="Root dir containing dataset splits (default: splits)")
     parser.add_argument("--train_ratio", type=float, default=0.8, help="Base train ratio used in splits.json (default: 0.8)")
     parser.add_argument("--label_strategy", default="dual_threshold", help="Label strategy (default: dual_threshold)")
-    parser.add_argument("--neg_threshold", type=float, default=-0.005, help="Negative threshold (default: -0.005)")
-    parser.add_argument("--pos_threshold", type=float, default=0.0055, help="Positive threshold (default: 0.0055)")
+    parser.add_argument("--neg_threshold", type=float, default=-0.005, help="DOWN threshold (default: -0.005)")
+    parser.add_argument("--pos_threshold", type=float, default=0.0055, help="UP threshold (default: 0.0055)")
     args = parser.parse_args()
 
     split_dir = _resolve_split_dir(

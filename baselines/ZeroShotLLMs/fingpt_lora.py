@@ -64,15 +64,25 @@ def _render_prompts(tokenizer: AutoTokenizer, prompts: List[shared_prompts.Sampl
     return rendered
 
 
+def _normalize_label(label: str) -> str:
+    normalized = (label or "").strip().upper()
+    if normalized in {"UP", "POSITIVE"}:
+        return "UP"
+    if normalized in {"DOWN", "NEGATIVE"}:
+        return "DOWN"
+    return "Unknown"
+
+
 def _parse_prediction(text: str) -> tuple[str, float | None]:
     direction, value = extract_stock_direction_and_value(text)
-    if direction in {"Positive", "Negative"}:
+    direction = _normalize_label(direction)
+    if direction in {"UP", "DOWN"}:
         return direction, value
     cleaned = (text or "").strip().lower()
     if "up" in cleaned and "down" not in cleaned:
-        return "Positive", value
+        return "UP", value
     if "down" in cleaned and "up" not in cleaned:
-        return "Negative", value
+        return "DOWN", value
     return "Unknown", value
 
 

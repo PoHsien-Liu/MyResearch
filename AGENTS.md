@@ -73,7 +73,7 @@
   - predictions.jsonl：每行一筆記錄，建議欄位（不含 used_event_ids）：
     - sample_id（{ticker}_{prediction_date}）、dataset、method、model、experiment_name
     - ticker、prediction_date、ground_truth
-    - prediction：{"label": "Positive"|"Negative", "confidence": null|number}
+    - prediction：{"label": "UP"|"DOWN", "confidence": null|number}
     - reason：短解釋文本（必備）
     - raw_response（可選，預設保留並可截斷）
     - prompts（可選）：{"system": str, "user": str}

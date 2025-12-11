@@ -8,7 +8,7 @@
 ## 路徑與資料載入
 - 透過 `DATASETS_DIR`（預設 `./datasets`）與 `OUTPUTS_DIR`（預設 `./outputs`）解析路徑；`resolve_dataset_paths` 對應 `price/raw` 與 `tweet/raw`（CMIN 則讀 news csv）。
 - 共享 split：使用 `common.data.loader.list_trading_days` 依 `--train_ratio` / `--split_seed` 產生 train/test。
-- 摘要邏輯：對每個樣本，取目標交易日往前 `--seq_len` 個交易日（含當日），逐日讀取文本並用 summarizer 生成摘要，再按日期串成 summary。label 採 legacy（ret>0 為 Positive 否則 Negative）。
+- 摘要邏輯：對每個樣本，取目標交易日往前 `--seq_len` 個交易日（含當日），逐日讀取文本並用 summarizer 生成摘要，再按日期串成 summary。label 採 legacy（ret>0 為 UP 否則 DOWN）。
 - 摘要快取：存於 `outputs/cache/summaries/{dataset}/{model}/SEP/`，以 (ticker, date, tweets sha) 為 key。
 
 ## 推論流程

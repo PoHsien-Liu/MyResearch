@@ -113,6 +113,15 @@ def _print_prompts(sample: Sample, top_factors: int, logger: logging.Logger) -> 
     logger.info("USER:\n%s", pred_prompt.user)
 
 
+def _canonical_label(label: str) -> str:
+    normalized = (label or "").strip().upper()
+    if normalized in {"UP", "POSITIVE"}:
+        return "UP"
+    if normalized in {"DOWN", "NEGATIVE"}:
+        return "DOWN"
+    return "Unknown"
+
+
 def _parse_factors(raw: str, top_k: int) -> List[str]:
     factors: List[str] = []
     for line in (raw or "").splitlines():
@@ -132,7 +141,8 @@ def _parse_factors(raw: str, top_k: int) -> List[str]:
 
 def _parse_prediction_label(raw: str) -> Tuple[str, Optional[float]]:
     text = raw or ""
-    direction, value = extract_stock_direction_and_value(text)
+    direction_raw, value = extract_stock_direction_and_value(text)
+    direction = _canonical_label(direction_raw)
 
     lowered = text.lower()
     # Prefer future/explicit predictions, avoid past-tense "fell"
@@ -142,31 +152,32 @@ def _parse_prediction_label(raw: str) -> Tuple[str, Optional[float]]:
         r"\bexpect(?:s|ed|ing)?\b.*?\b(rise|go up|increase|fall|go down|decrease)\b",
     ]
     verb_label = {
-        "rise": "Positive",
-        "go up": "Positive",
-        "increase": "Positive",
-        "fall": "Negative",
-        "go down": "Negative",
-        "decrease": "Negative",
+        "rise": "UP",
+        "go up": "UP",
+        "increase": "UP",
+        "fall": "DOWN",
+        "go down": "DOWN",
+        "decrease": "DOWN",
     }
     for pat in patterns:
         m = re.search(pat, lowered)
         if m:
             verb = m.group(1)
-            label = verb_label.get(verb, direction if direction in {"Positive", "Negative"} else "Unknown")
+            fallback = direction if direction in {"UP", "DOWN"} else "Unknown"
+            label = verb_label.get(verb, fallback)
             if label != "Unknown":
                 return label, value
 
-    if direction in {"Positive", "Negative"}:
+    if direction in {"UP", "DOWN"}:
         return direction, value
     if " rise" in lowered or lowered.startswith("rise"):
-        return "Positive", value
+        return "UP", value
     if " fall" in lowered or lowered.startswith("fall"):
-        return "Negative", value
+        return "DOWN", value
     if " up" in lowered and "down" not in lowered:
-        return "Positive", value
+        return "UP", value
     if " down" in lowered and "up" not in lowered:
-        return "Negative", value
+        return "DOWN", value
     return "Unknown", value
 
 
@@ -348,7 +359,7 @@ def _write_eval(metrics: Dict, out_dir: Path, args, experiment_name: str, base_m
         "recall": metrics["recall"],
         "f1": metrics["f1"],
         "confusion_matrix": {
-            "labels": ["Negative", "Positive"],
+            "labels": ["DOWN", "UP"],
             "matrix": metrics["confusion_matrix"],
         },
         "total": metrics["total"],

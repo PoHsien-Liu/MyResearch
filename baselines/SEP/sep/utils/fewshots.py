@@ -137,7 +137,7 @@ Apple faced declining iPhone sales, but the company focused on promoting apps an
 The stock price experienced fluctuations after the earnings report, with significant after-hours gains.
 Apple's market weight rating was reiterated by Wells Fargo, with a target price of $120.00.
 
-Price Movement: Positive
+Price Movement: UP
 
 Explanation: Apple reported strong Q3 2016 earnings, surpassing revenue expectations and delivering robust sales figures across its product lines, including iPhones, iPads, and Macs. This performance exceeded market projections and triggered a nearly 5% increase in the stock's after-hours trading. Additionally, Apple's substantial cash reserves of $231.5 billion, capable of facilitating major acquisitions, demonstrated the company's financial stability and growth potential. Despite challenges in China, Apple's diverse revenue sources, including higher-priced iPad Pro models and the dominant Apple Pay in US contactless payments, contributed positively to its overall Price Movement. The promising growth trajectory of Apple's services business added further optimism. While facing declining iPhone sales, Apple's strategic focus on promoting apps and services reflected adaptability in response to changing market dynamics. The consistent support from Wells Fargo with a reiterated market weight rating and target price also reinforced investor confidence. The stock's fluctuations were notable but aligned with the positive earnings report, showcasing the market's responsiveness to Apple's performance.
 
@@ -154,7 +154,7 @@ CEO Tim Cook attributed the challenges to strong macroeconomic headwinds, especi
 Despite the earnings miss, Apple announced plans to raise its dividend and return $50 billion more to shareholders.
 Apple's stock price experienced a decline of around 4.8% in after-hours trading following the earnings report.
 
-Price Movement: Negative
+Price Movement: DOWN
 
 Explanation: Apple reported disappointing Q2 2016 earnings, missing both profit and revenue estimates. The company's revenue and adjusted earnings per share fell short of expectations, marking the first quarterly revenue decline in 13 years. iPhone sales, a cornerstone of Apple's business, experienced their first-ever decline since the product's debut in 2007. The weaker-than-expected guidance for the next quarter further dampened investor Price Movement. The CEO's acknowledgment of strong macroeconomic headwinds, particularly in China, indicated external challenges affecting the company's performance. Despite announcing plans to increase dividends and return more to shareholders, the stock price plunged around 4.8% in after-hours trading following the earnings report. Overall, these factors collectively indicate a negative Price Movement surrounding AAPL stock due to its underwhelming financial performance and market outlook.
 """

@@ -78,7 +78,7 @@ def _write_eval(metrics: Dict, args, results_dir: str, wall_time: float) -> None
         "recall": metrics["recall"],
         "f1": metrics["f1"],
         "confusion_matrix": {
-            "labels": ["Negative", "Positive"],
+            "labels": ["DOWN", "UP"],
             "matrix": metrics["confusion_matrix"],
         },
         "total": metrics["total"],

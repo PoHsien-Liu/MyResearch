@@ -20,18 +20,21 @@ from common.stock_direction import extract_stock_direction_and_value  # noqa: E4
 
 def _parse_model_prediction(text: str) -> tuple[str, float | None]:
     direction, value = extract_stock_direction_and_value(text)
-    if direction in {"Positive", "Negative"}:
+    direction = (direction or "").strip().upper()
+    if direction in {"UP", "DOWN"}:
         return direction, value
+    if direction in {"POSITIVE", "NEGATIVE"}:
+        return ("UP" if direction == "POSITIVE" else "DOWN"), value
     cleaned = (text or "").strip().lower()
     if '"prediction"' in cleaned or "prediction" in cleaned:
         if "up" in cleaned and "down" not in cleaned:
-            return "Positive", value
+            return "UP", value
         if "down" in cleaned and "up" not in cleaned:
-            return "Negative", value
+            return "DOWN", value
     if "up" in cleaned and "down" not in cleaned:
-        return "Positive", value
+        return "UP", value
     if "down" in cleaned and "up" not in cleaned:
-        return "Negative", value
+        return "DOWN", value
     return "Unknown", value
 
 

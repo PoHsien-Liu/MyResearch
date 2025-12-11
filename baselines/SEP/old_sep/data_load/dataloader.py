@@ -25,9 +25,9 @@ class DataLoader:
         price_chg = price_data[price_data[:, 0] == date_str][0, 1].astype(float)
 
         if price_chg > 0.0:
-            sentiment = "Positive"
+            sentiment = "UP"
         else:
-            sentiment = "Negative"
+            sentiment = "DOWN"
         return sentiment
 
 

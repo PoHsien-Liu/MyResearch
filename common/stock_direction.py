@@ -2,7 +2,7 @@ import re
 from typing import Optional, Tuple
 
 
-_POSITIVE_TOKENS = {
+_UP_TOKENS = {
     "up",
     "upward",
     "increase",
@@ -34,7 +34,7 @@ _POSITIVE_TOKENS = {
     "strengthening",
 }
 
-_NEGATIVE_TOKENS = {
+_DOWN_TOKENS = {
     "down",
     "downward",
     "decrease",
@@ -132,7 +132,7 @@ def extract_stock_direction_and_value(text: Optional[str]) -> Tuple[str, Optiona
 
     value_from_phrase = _percent_from_stock_return_phrase(cleaned)
     if value_from_phrase is not None and value_from_phrase != 0:
-        direction = "Positive" if value_from_phrase > 0 else "Negative"
+        direction = "UP" if value_from_phrase > 0 else "DOWN"
         return direction, value_from_phrase
 
     paren_direction = _paren_direction(cleaned)
@@ -159,10 +159,10 @@ def _token_to_direction(token: Optional[str]) -> Optional[str]:
     if not token:
         return None
     normalized = re.sub(r"[^a-z\-]", "", token.lower())
-    if normalized in _POSITIVE_TOKENS:
-        return "Positive"
-    if normalized in _NEGATIVE_TOKENS:
-        return "Negative"
+    if normalized in _UP_TOKENS:
+        return "UP"
+    if normalized in _DOWN_TOKENS:
+        return "DOWN"
     return None
 
 
@@ -190,7 +190,7 @@ def _paren_direction(text: str) -> Optional[str]:
     match = re.search(r"\((up|down)\)", text)
     if not match:
         return None
-    return "Positive" if match.group(1) == "up" else "Negative"
+    return "UP" if match.group(1) == "up" else "DOWN"
 
 
 def _tail_direction(text: str) -> Optional[str]:

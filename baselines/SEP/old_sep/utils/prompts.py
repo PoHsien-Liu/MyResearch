@@ -9,7 +9,7 @@ Tweets:
 Facts:"""
 
 PREDICT_INSTRUCTION = """Given a list of facts, estimate their overall impact on the price movement of {ticker} stock. Give your response in this format:
-(1) Price Movement, which should be either Positive or Negative.
+(1) Price Movement, which should be either UP or DOWN.
 (2) Explanation, which should be in a single, short paragraph.
 Here are some examples:
 {examples}
@@ -22,7 +22,7 @@ Price Movement:"""
 
 
 PREDICT_REFLECT_INSTRUCTION = """Given a list of facts, estimate their overall impact on the price movement of {ticker} stock. Give your response in this format:
-(1) Price Movement, which should be either Positive or Negative.
+(1) Price Movement, which should be either UP or DOWN.
 (2) Explanation, which should be in a single, short paragraph.
 Here are some examples:
 {examples}

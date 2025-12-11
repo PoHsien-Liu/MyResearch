@@ -2,16 +2,16 @@ from metrics import calculate_metrics, save_metrics
 
 def test_metrics():
     # 測試案例 1: 完美預測
-    perfect_preds = ["Positive", "Negative", "Positive", "Negative", "Positive"]
-    perfect_labels = ["Positive", "Negative", "Positive", "Negative", "Positive"]
+    perfect_preds = ["UP", "DOWN", "UP", "DOWN", "UP"]
+    perfect_labels = ["UP", "DOWN", "UP", "DOWN", "UP"]
     
     # 測試案例 2: 部分正確預測
-    mixed_preds = ["Positive", "Negative", "Positive", "Positive", "Negative"]
-    mixed_labels = ["Positive", "Negative", "Negative", "Positive", "Negative"]
+    mixed_preds = ["UP", "DOWN", "UP", "UP", "DOWN"]
+    mixed_labels = ["UP", "DOWN", "DOWN", "UP", "DOWN"]
     
     # 測試案例 3: 包含 Unknown 預測
-    unknown_preds = ["Positive", "Unknown", "Negative", "Positive", "Unknown"]
-    unknown_labels = ["Positive", "Negative", "Negative", "Positive", "Negative"]
+    unknown_preds = ["UP", "Unknown", "DOWN", "UP", "Unknown"]
+    unknown_labels = ["UP", "DOWN", "DOWN", "UP", "DOWN"]
     
     # 測試案例 4: 空列表
     empty_preds = []
@@ -50,9 +50,9 @@ def print_metrics(metrics):
     print(f"MCC: {metrics['mcc']:.4f}")
     print("混淆矩陣:")
     print("          Predicted")
-    print("          Negative Positive")
-    print(f"Actual Negative    {metrics['confusion_matrix'][0][0]:<8} {metrics['confusion_matrix'][0][1]:<8}")
-    print(f"        Positive    {metrics['confusion_matrix'][1][0]:<8} {metrics['confusion_matrix'][1][1]:<8}")
+    print("          DOWN     UP")
+    print(f"Actual DOWN        {metrics['confusion_matrix'][0][0]:<8} {metrics['confusion_matrix'][0][1]:<8}")
+    print(f"        UP         {metrics['confusion_matrix'][1][0]:<8} {metrics['confusion_matrix'][1][1]:<8}")
 
 if __name__ == "__main__":
     test_metrics() 

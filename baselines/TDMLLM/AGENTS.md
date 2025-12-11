@@ -7,7 +7,7 @@
   1) 資料載入：以 `seq_len` 天視窗聚合每個 `(ticker, end_date)` 的推文；由價格資料產生二分類標籤（正/負）。
   2) 推文摘要：對視窗內逐日推文以 LLM 產生摘要，並快取（避免重複計算）。
   3) 公司描述：依 `ticker` 產生/載入公司描述，用於條件化預測指令。
-  4) 預測生成：以公司描述 + 視窗摘要組 Prompt，使用 LLM 產出原始回覆，解析成 `Positive/Negative`。
+  4) 預測生成：以公司描述 + 視窗摘要組 Prompt，使用 LLM 產出原始回覆，解析成 `UP/DOWN`。
   5) 評估與輸出：計算 ACC/MCC 等，寫出標準化輸出（見「輸出規範」）。
 - 主要模組：
   - `common/data/loader.py`：`list_trading_days` / `get_record`，統一價格/文本讀取與切分。
@@ -58,7 +58,7 @@ CLI 與參數（建議）
     - `sample_id`（`{ticker}_{prediction_date}`）
     - `dataset`, `method`="TDMLLM", `model`, `experiment_name`
     - `ticker`, `prediction_date`, `ground_truth`
-    - `prediction`: `{"label": "Positive"|"Negative", "confidence": null|number}`
+    - `prediction`: `{"label": "UP"|"DOWN", "confidence": null|number}`
     - `raw_response`（可截斷至 `truncate_chars`）
     - `prompts`（可選）：`{"system": str, "user": str}`
     - `timing`（可選）：`{"latency_ms": number}`

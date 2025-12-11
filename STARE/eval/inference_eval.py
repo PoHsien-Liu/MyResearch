@@ -31,16 +31,16 @@ from STARE.eval.metrics import evaluate_predictions_file
 
 
 ALIAS_TO_LABEL = {
-    "positive": "Positive",
-    "pos": "Positive",
-    "up": "Positive",
-    "+": "Positive",
-    "1": "Positive",
-    "negative": "Negative",
-    "neg": "Negative",
-    "down": "Negative",
-    "-": "Negative",
-    "0": "Negative",
+    "up": "UP",
+    "+": "UP",
+    "1": "UP",
+    "positive": "UP",
+    "pos": "UP",
+    "down": "DOWN",
+    "-": "DOWN",
+    "0": "DOWN",
+    "negative": "DOWN",
+    "neg": "DOWN",
 }
 
 
@@ -126,9 +126,9 @@ def parse_prediction(text: str) -> Tuple[Optional[str], Dict]:
             meta["json_error"] = "failed to parse json prediction"
     lower = (text or "").lower()
     if "down" in lower and "up" not in lower:
-        return "Negative", meta
+        return "DOWN", meta
     if "up" in lower and "down" not in lower:
-        return "Positive", meta
+        return "UP", meta
     return None, meta
 
 
@@ -216,9 +216,8 @@ def run_inference(args: argparse.Namespace, logger: logging.Logger) -> Tuple[Pat
     with (output_dir / "args.json").open("w", encoding="utf-8") as f:
         json.dump(args_snapshot, f, ensure_ascii=False, indent=2)
 
-    model_id = args.adapter_path or args.base_model
-    logger.info("Loading tokenizer/model %s", model_id)
-    tok = AutoTokenizer.from_pretrained(model_id, use_fast=True)
+    logger.info("Loading tokenizer from base model %s", args.base_model)
+    tok = AutoTokenizer.from_pretrained(args.base_model, use_fast=True)
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
     tok.padding_side = "left"

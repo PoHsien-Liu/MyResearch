@@ -9,12 +9,10 @@ from glob import glob
 from typing import Dict, List, Optional
 
 import pandas as pd
+from tqdm import tqdm
 
 from common.data.splits import get_split_dates
 
-
-def _repo_root() -> str:
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 DATE_WINDOWS = {
     "STOCKNET": ("2014-01-01", "2015-12-31"),
@@ -43,6 +41,7 @@ def list_trading_days(
     neg_threshold: float = DEFAULT_NEG_THRESHOLD,
     pos_threshold: float = DEFAULT_POS_THRESHOLD,
     logger=None,
+    progress: bool = False,
 ) -> List[Dict[str, str]]:
     assert mode in {"train", "test"}
 
@@ -67,7 +66,11 @@ def list_trading_days(
 
     dataset_key = dataset_name.upper()
 
-    for ticker, price_path in _iter_price_files(price_dir, dataset_key):
+    iter_price_files = _iter_price_files(price_dir, dataset_key)
+    if progress:
+        iter_price_files = tqdm(iter_price_files, desc=f"[{dataset_key}] price files", unit="file")
+
+    for ticker, price_path in iter_price_files:
         try:
             df, _ = _load_price_frame(price_path)
         except Exception as exc:
@@ -118,11 +121,7 @@ def list_trading_days(
 
     samples.sort(key=lambda x: (x["date"], x["ticker"]))
     stats["kept_samples"] = len(samples)
-    list_trading_days.last_stats = stats
     return samples
-
-
-list_trading_days.last_stats = {}
 
 
 def get_record(
@@ -361,11 +360,11 @@ def _label_from_return(ret_value: float, strategy: str, neg_threshold: float, po
     strategy = (strategy or "legacy").lower()
     if strategy == "dual_threshold":
         if ret_value <= neg_threshold:
-            return "Negative"
+            return "DOWN"
         if ret_value > pos_threshold:
-            return "Positive"
+            return "UP"
         return None
-    return "Positive" if ret_value > 0 else "Negative"
+    return "UP" if ret_value > 0 else "DOWN"
 
 
 def load_texts_for_day(

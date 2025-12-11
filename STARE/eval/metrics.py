@@ -8,19 +8,19 @@ from pathlib import Path
 from typing import Dict, Iterable, List, Mapping, MutableMapping, Tuple
 
 
-_LABEL_CANONICAL = {"positive": "Positive", "negative": "Negative"}
+_LABEL_CANONICAL = {"up": "UP", "down": "DOWN", "positive": "UP", "negative": "DOWN"}
 _LABEL_ALIASES = {
-    "pos": "positive",
-    "neg": "negative",
-    "1": "positive",
-    "0": "negative",
-    "+": "positive",
-    "-": "negative",
+    "pos": "up",
+    "neg": "down",
+    "1": "up",
+    "0": "down",
+    "+": "up",
+    "-": "down",
 }
 
 
 def _normalize_label(raw: object | None) -> str | None:
-    """Normalize a raw label to 'Positive' or 'Negative'; return None if unknown."""
+    """Normalize a raw label to 'UP' or 'DOWN'; return None if unknown."""
     if raw is None:
         return None
     text = str(raw).strip().lower()
@@ -86,7 +86,7 @@ def evaluate_classification(
         "invalid_prediction": 0,
         "unknown_predictions": 0,
     }
-    label_map = {"Positive": 1, "Negative": 0}
+    label_map = {"UP": 1, "DOWN": 0}
     preds_mapped: List[int] = []
     labels_mapped: List[int] = []
 

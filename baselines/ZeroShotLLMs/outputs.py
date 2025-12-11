@@ -68,7 +68,7 @@ def save_eval(metrics: Dict, results_dir: str, args, wall_time: float, method_na
         "recall": metrics["recall"],
         "f1": metrics["f1"],
         "confusion_matrix": {
-            "labels": ["Negative", "Positive"],
+            "labels": ["DOWN", "UP"],
             "matrix": metrics["confusion_matrix"],
         },
         "total": metrics["total"],

@@ -7,8 +7,8 @@ import numpy as np
 def calculate_metrics(preds, labels):
     """
     Args:
-        preds: List[str], like ["Positive", "Negative", "Unknown", ...]
-        labels: List[str], like ["Positive", "Negative", ...]
+        preds: List[str], like ["UP", "DOWN", "Unknown", ...]
+        labels: List[str], like ["UP", "DOWN", ...]
     
     Returns:
         dict: {
@@ -20,15 +20,15 @@ def calculate_metrics(preds, labels):
             'confusion_matrix': List[List[int]]
         }
     """
-    label_map = {'Positive': 1, 'Negative': 0}
+    label_map = {'UP': 1, 'POSITIVE': 1, 'DOWN': 0, 'NEGATIVE': 0}
     unknown_predictions = 0
 
     preds_mapped = []
     labels_mapped = []
 
     for p, l in zip(preds, labels):
-        true_label = label_map.get(l, -1)
-        pred_val = label_map.get(p, -1)
+        true_label = label_map.get(str(l).upper(), -1)
+        pred_val = label_map.get(str(p).upper(), -1)
 
         if true_label == -1:
             continue
@@ -107,7 +107,7 @@ def save_metrics(metrics_result, model_name, results_dir, dataset_name=None, exp
         "f1_score": metrics_result['f1'],
         "unknown_predictions": metrics_result.get('unknown_predictions', 0),
         "confusion_matrix": {
-            "labels": ["Negative", "Positive"],
+            "labels": ["DOWN", "UP"],
             "matrix": metrics_result['confusion_matrix']
         }
     }
